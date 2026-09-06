@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">21-Day Digital Detox</string>
+    <string name="title_activity_main">21-Day Digital Detox</string>
+    <string name="package_name">com.karenpet.detox21</string>
+    <string name="custom_url_scheme">com.karenpet.detox21</string>
+</resources>

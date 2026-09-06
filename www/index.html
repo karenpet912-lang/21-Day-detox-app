@@ -1,0 +1,3425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0D1220">
+  <meta name="theme-color" content="#0D1220" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F4F6F1" media="(prefers-color-scheme: light)">
+  <meta name="description" content="Take back control of your screen time and rediscover life beyond the scroll.">
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS home screen icons -->
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+
+  <!-- iOS splash / title -->
+  <meta name="apple-mobile-web-app-title" content="Detox">
+
+  <!-- iOS splash screens (shown while the PWA launches from the home screen) -->
+  <link rel="apple-touch-startup-image" href="icons/splash/splash-640x1136.png"
+        media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="icons/splash/splash-750x1334.png"
+        media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="icons/splash/splash-1170x2532.png"
+        media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="icons/splash/splash-1290x2796.png"
+        media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+
+  <title>21-Day Digital Detox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Confetti for celebration moments (App.celebrate()). Cached by the
+       service worker so it still works offline after the first load;
+       celebrate() no-ops safely if it ever fails to load. -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js" defer></script>
+
+  <!--
+    ╔══════════════════════════════════════════════════════╗
+    ║  21-DAY DIGITAL DETOX — Web App                      ║
+    ║  i18n-ready: all strings in STRINGS.en               ║
+    ║  To add a language copy the 'en' block with new key  ║
+    ║  e.g. 'cs', 'de', 'fr', 'es', 'sk', 'pl' …         ║
+    ╚══════════════════════════════════════════════════════╝
+  -->
+
+  <style>
+    /* ═══════════════════════════════════════════════════════
+       DESIGN TOKENS — "Aurora Glass"
+       Dark is the flagship default; light is a full parallel
+       system under the SAME token names so every component
+       below only ever reads a variable, never a literal color.
+       Precedence: [data-theme] (explicit user choice, set by
+       App.setTheme()) always wins over prefers-color-scheme,
+       which wins over the dark base defined directly on :root.
+       ═══════════════════════════════════════════════════════ */
+    :root {
+      /* ── shape & motion (theme-independent) ── */
+      --radius:        28px;
+      --radius-sm:     18px;
+      --radius-xs:     12px;
+      --tab-h:         92px;
+      --ease-spring:   cubic-bezier(.34,1.56,.64,1);
+      --ease-smooth:   cubic-bezier(.4,0,.2,1);
+      --dur-fast:      150ms;
+      --dur-medium:    300ms;
+      --dur-slow:      600ms;
+      --glass-blur:    18px;
+
+      /* ── DARK (base / default) — "Moonlight" ── */
+      --bg:            #0D1220;
+      --bg-2:          #121832;
+      --surface:       #141A33;
+      --glass:         rgba(226,232,255,.06);
+      --glass-elevated:rgba(226,232,255,.09);
+      --glass-border:  rgba(226,232,255,.12);
+      --glass-hi:      rgba(226,232,255,.08);
+      --glass-shadow:  0 8px 32px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.25);
+
+      --primary:       #B8C4E8;
+      --primary-mid:   #8A9DD1;
+      --primary-light: rgba(184,196,232,.16);
+      --primary-faint: rgba(184,196,232,.08);
+      --on-primary:    #0D1220;
+
+      --gold:          #8A9DD1;
+      --gold-light:    rgba(138,157,209,.14);
+      --on-gold:       #0D1220;
+
+      --text:          #F2F0FA;
+      --text-mid:      #9098B8;
+      --text-muted:    #9098B8;
+      --text-faint:    #5C6488;
+      --border:        rgba(226,232,255,.12);
+
+      --shadow-xs:     0 1px 3px rgba(0,0,0,.2), 0 1px 8px rgba(0,0,0,.15);
+      --shadow-sm:     0 2px 8px rgba(0,0,0,.22), 0 4px 20px rgba(0,0,0,.18);
+      --shadow-md:     0 4px 16px rgba(0,0,0,.26), 0 8px 32px rgba(0,0,0,.2);
+      --shadow-lg:     0 8px 32px rgba(0,0,0,.32), 0 20px 60px rgba(0,0,0,.26);
+
+      --glow-accent:   0 0 1px rgba(184,196,232,.35), 0 0 28px rgba(184,196,232,.16);
+      --glow-gold:     0 0 1px rgba(138,157,209,.30), 0 0 28px rgba(138,157,209,.14);
+      --aurora-op:     .22;
+
+      --danger-bg:     rgba(248,113,113,.12);
+      --danger-bg-active: rgba(248,113,113,.20);
+      --danger-border: rgba(248,113,113,.35);
+      --danger-text:   #F87171;
+      --accent:        #B8C4E8;
+      --accent-deep:   #8A9DD1;
+      --chart-mood:    #8FB4E8;
+      --chart-screen:  #7FD4B8;
+      --chart-sleep:   #D4A574;
+      color-scheme: dark;
+    }
+
+    /* ── LIGHT (system preference, unless user forced dark) ── */
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        --bg:            #F4F6F1;
+        --bg-2:          #EEF2EA;
+        --surface:       #FFFFFF;
+        --glass:         rgba(255,255,255,.6);
+        --glass-elevated:rgba(255,255,255,.78);
+        --glass-border:  rgba(27,67,50,.10);
+        --glass-hi:      rgba(255,255,255,.7);
+        --glass-shadow:  0 8px 32px rgba(27,67,50,.10), 0 2px 8px rgba(27,67,50,.06);
+
+        --primary:       #1B4332;
+        --primary-mid:   #2D6A4F;
+        --primary-light: #D8F3DC;
+        --primary-faint: #F0FAF2;
+        --on-primary:    #FFFFFF;
+
+        --gold:          #9C6418;
+        --gold-light:    #FEFCE8;
+        --on-gold:       #FFFFFF;
+
+        --text:          #0D1F13;
+        --text-mid:      #4A6355;
+        --text-muted:    #5C7568;
+        --text-faint:    #5C7568;
+        --border:        #E2EBE6;
+
+        --shadow-xs:     0 1px 3px rgba(27,67,50,.05), 0 1px 8px rgba(27,67,50,.04);
+        --shadow-sm:     0 2px 8px rgba(27,67,50,.07), 0 4px 20px rgba(27,67,50,.05);
+        --shadow-md:     0 4px 16px rgba(27,67,50,.09), 0 8px 32px rgba(27,67,50,.07);
+        --shadow-lg:     0 8px 32px rgba(27,67,50,.12), 0 20px 60px rgba(27,67,50,.10);
+
+        --glow-accent:   0 0 16px rgba(45,106,79,.18);
+        --glow-gold:     0 0 16px rgba(156,100,24,.18);
+        --aurora-op:     .12;
+
+        --danger-bg:     #FFF5F5;
+        --danger-bg-active: #FEE2E2;
+        --danger-border: #FCA5A5;
+        --danger-text:   #DC2626;
+        --accent:        #3B6FC4;
+        --accent-deep:   #2A5296;
+        --chart-mood:    #3B6FC4;
+        --chart-screen:  #2D6A4F;
+        --chart-sleep:   #9C6418;
+        color-scheme: light;
+      }
+    }
+    /* ── Explicit user choice always wins, both directions ── */
+    :root[data-theme="light"] {
+      --bg:            #F4F6F1;
+      --bg-2:          #EEF2EA;
+      --surface:       #FFFFFF;
+      --glass:         rgba(255,255,255,.6);
+      --glass-elevated:rgba(255,255,255,.78);
+      --glass-border:  rgba(27,67,50,.10);
+      --glass-hi:      rgba(255,255,255,.7);
+      --glass-shadow:  0 8px 32px rgba(27,67,50,.10), 0 2px 8px rgba(27,67,50,.06);
+      --primary:       #1B4332;
+      --primary-mid:   #2D6A4F;
+      --primary-light: #D8F3DC;
+      --primary-faint: #F0FAF2;
+      --on-primary:    #FFFFFF;
+      --gold:          #9C6418;
+      --gold-light:    #FEFCE8;
+      --on-gold:       #FFFFFF;
+      --text:          #0D1F13;
+      --text-mid:      #4A6355;
+      --text-muted:    #5C7568;
+      --text-faint:    #5C7568;
+      --border:        #E2EBE6;
+      --shadow-xs:     0 1px 3px rgba(27,67,50,.05), 0 1px 8px rgba(27,67,50,.04);
+      --shadow-sm:     0 2px 8px rgba(27,67,50,.07), 0 4px 20px rgba(27,67,50,.05);
+      --shadow-md:     0 4px 16px rgba(27,67,50,.09), 0 8px 32px rgba(27,67,50,.07);
+      --shadow-lg:     0 8px 32px rgba(27,67,50,.12), 0 20px 60px rgba(27,67,50,.10);
+      --glow-accent:   0 0 16px rgba(45,106,79,.18);
+      --glow-gold:     0 0 16px rgba(156,100,24,.18);
+      --aurora-op:     .12;
+      --danger-bg:     #FFF5F5;
+      --danger-bg-active: #FEE2E2;
+      --danger-border: #FCA5A5;
+      --danger-text:   #DC2626;
+      --accent:        #3B6FC4;
+      --accent-deep:   #2A5296;
+      --chart-mood:    #3B6FC4;
+      --chart-screen:  #2D6A4F;
+      --chart-sleep:   #9C6418;
+      color-scheme: light;
+    }
+    :root[data-theme="dark"] {
+      --bg:            #0D1220;
+      --bg-2:          #121832;
+      --surface:       #141A33;
+      --glass:         rgba(226,232,255,.06);
+      --glass-elevated:rgba(226,232,255,.09);
+      --glass-border:  rgba(226,232,255,.12);
+      --glass-hi:      rgba(226,232,255,.08);
+      --glass-shadow:  0 8px 32px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.25);
+      --primary:       #B8C4E8;
+      --primary-mid:   #8A9DD1;
+      --primary-light: rgba(184,196,232,.16);
+      --primary-faint: rgba(184,196,232,.08);
+      --on-primary:    #0D1220;
+      --gold:          #8A9DD1;
+      --gold-light:    rgba(138,157,209,.14);
+      --on-gold:       #0D1220;
+      --text:          #F2F0FA;
+      --text-mid:      #9098B8;
+      --text-muted:    #9098B8;
+      --text-faint:    #5C6488;
+      --border:        rgba(226,232,255,.12);
+      --shadow-xs:     0 1px 3px rgba(0,0,0,.2), 0 1px 8px rgba(0,0,0,.15);
+      --shadow-sm:     0 2px 8px rgba(0,0,0,.22), 0 4px 20px rgba(0,0,0,.18);
+      --shadow-md:     0 4px 16px rgba(0,0,0,.26), 0 8px 32px rgba(0,0,0,.2);
+      --shadow-lg:     0 8px 32px rgba(0,0,0,.32), 0 20px 60px rgba(0,0,0,.26);
+      --glow-accent:   0 0 1px rgba(184,196,232,.35), 0 0 28px rgba(184,196,232,.16);
+      --glow-gold:     0 0 1px rgba(138,157,209,.30), 0 0 28px rgba(138,157,209,.14);
+      --aurora-op:     .22;
+      --danger-bg:     rgba(248,113,113,.12);
+      --danger-bg-active: rgba(248,113,113,.20);
+      --danger-border: rgba(248,113,113,.35);
+      --danger-text:   #F87171;
+      --accent:        #B8C4E8;
+      --accent-deep:   #8A9DD1;
+      --chart-mood:    #8FB4E8;
+      --chart-screen:  #7FD4B8;
+      --chart-sleep:   #D4A574;
+      color-scheme: dark;
+    }
+
+    /* Large numbers should not jiggle in width as digits change */
+    .stat-val, .ring-text-val, .day-badge, #hdr-sub, .cert-foot span:first-child {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: 'tnum' 1;
+    }
+
+    /* ── RESET ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+      -webkit-font-smoothing: antialiased;
+      transition: background var(--dur-slow) var(--ease-smooth), color var(--dur-medium) var(--ease-smooth);
+    }
+
+    /* ── AURORA BACKGROUND ────────────────────────────────
+       Slow-drifting blurred gradient blobs behind the whole
+       app. GPU-only transform/opacity so it never touches
+       layout or scroll performance. Static under
+       prefers-reduced-motion. */
+    .aurora-bg {
+      position: fixed; inset: 0; z-index: -1;
+      overflow: hidden; background: var(--bg);
+      transition: background var(--dur-slow) var(--ease-smooth);
+    }
+    /* Dark mode only — light mode keeps the flat --bg fill above untouched. */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .aurora-bg {
+        background: radial-gradient(ellipse 130% 90% at 88% 0%, var(--bg-2) 0%, var(--bg) 55%);
+      }
+    }
+    :root[data-theme="dark"] .aurora-bg {
+      background: radial-gradient(ellipse 130% 90% at 88% 0%, var(--bg-2) 0%, var(--bg) 55%);
+    }
+
+    /* ── STARFIELD (dark mode only) ─────────────────────────
+       Stars are generated once in App._initStarfield() with
+       randomized position/size/opacity and an individually
+       randomized twinkle duration+delay so they never blink in
+       sync. Hidden entirely in light mode. */
+    .starfield { display: none; position: absolute; inset: 0; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .starfield { display: block; }
+    }
+    :root[data-theme="dark"] .starfield { display: block; }
+    .star {
+      position: absolute; border-radius: 50%; background: #fff;
+      animation-name: starTwinkle;
+      animation-timing-function: ease-in-out;
+      animation-iteration-count: infinite;
+    }
+    @keyframes starTwinkle {
+      0%, 100% { opacity: var(--star-min, .15); }
+      50%      { opacity: var(--star-max, .5); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .star { animation: none; }
+    }
+    .aurora-blob {
+      position: absolute; border-radius: 50%;
+      will-change: transform;
+      transform: translate3d(0,0,0);
+      filter: blur(90px);
+    }
+    @media (min-width: 700px) { .aurora-blob { filter: blur(120px); } }
+    .blob-1 {
+      width: 70vmax; height: 70vmax; top: -30vmax; left: -20vmax;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+      opacity: var(--aurora-op);
+      animation: auroraDrift1 34s var(--ease-smooth) infinite;
+    }
+    .blob-2 {
+      width: 60vmax; height: 60vmax; bottom: -28vmax; right: -22vmax;
+      background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+      opacity: calc(var(--aurora-op) * .85);
+      animation: auroraDrift2 40s var(--ease-smooth) infinite;
+    }
+    .blob-3 {
+      width: 50vmax; height: 50vmax; top: 28%; right: -16vmax;
+      background: radial-gradient(circle, #2DD4BF 0%, transparent 70%);
+      opacity: calc(var(--aurora-op) * .7);
+      animation: auroraDrift3 27s var(--ease-smooth) infinite;
+    }
+    @keyframes auroraDrift1 {
+      0%, 100% { transform: translate3d(0,0,0) scale(1); }
+      33%      { transform: translate3d(6vmax,8vmax,0) scale(1.12); }
+      66%      { transform: translate3d(-5vmax,4vmax,0) scale(.94); }
+    }
+    @keyframes auroraDrift2 {
+      0%, 100% { transform: translate3d(0,0,0) scale(1); }
+      40%      { transform: translate3d(-7vmax,-6vmax,0) scale(1.08); }
+      75%      { transform: translate3d(3vmax,-3vmax,0) scale(.96); }
+    }
+    @keyframes auroraDrift3 {
+      0%, 100% { transform: translate3d(0,0,0) scale(1); }
+      50%      { transform: translate3d(-6vmax,7vmax,0) scale(1.1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .aurora-blob { animation: none !important; }
+      body, .aurora-bg { transition: none !important; }
+    }
+
+    /* Reduced-motion celebration: a brief static glow instead of
+       flying confetti particles — see celebrate() in the script. */
+    body.celebrate-glow::after {
+      content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+      background: radial-gradient(circle at 50% 30%, rgba(184,196,232,.35), rgba(138,157,209,.15) 45%, transparent 70%);
+    }
+
+    /* ── LAYOUT ─────────────────────────────────────────── */
+    #app { display: flex; flex-direction: column; min-height: 100svh; }
+
+    .page {
+      display: none;
+      padding: 20px 16px calc(var(--tab-h) + 24px);
+      max-width: 500px;
+      margin: 0 auto;
+      width: 100%;
+      animation: fadeIn .25s ease;
+    }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity:1; transform:none; } }
+    @media (prefers-reduced-motion: reduce) { .page { animation: none; } }
+
+    /* ── VIEW TRANSITIONS (progressive enhancement) ───────
+       Used by App.go() via document.startViewTransition() when
+       supported; browsers without it just run the .page fadeIn
+       above instead — see the feature-detect in App.go(). */
+    @supports (view-transition-name: none) {
+      ::view-transition-old(root) { animation: pageOutVT var(--dur-medium) var(--ease-smooth) both; }
+      ::view-transition-new(root) { animation: pageInVT var(--dur-medium) var(--ease-smooth) both; }
+    }
+    @keyframes pageOutVT { to   { opacity: 0; transform: translateY(-4px); } }
+    @keyframes pageInVT  { from { opacity: 0; transform: translateY(4px);  } to { opacity: 1; transform: none; } }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    .app-header {
+      background: var(--glass-elevated);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      color: var(--text);
+      padding: calc(16px + env(safe-area-inset-top)) 20px 12px;
+      position: sticky; top: 0; z-index: 200;
+      border-bottom: 1px solid var(--glass-border);
+      box-shadow: 0 2px 20px rgba(0,0,0,.15);
+      transition: background var(--dur-medium) var(--ease-smooth);
+    }
+    .app-header h1 { font-size: 1rem; font-weight: 800; letter-spacing: .2px; }
+    .app-header .sub { font-size: .72rem; opacity: .65; margin-top: 3px; font-weight: 500; color: var(--text-mid); }
+
+    /* ── BOTTOM NAV — floating glass pill ─────────────────
+       .nav-indicator is a single absolutely-positioned pill
+       that glides behind the active tab (App._updateNavIndicator
+       computes its transform/width from the active button's
+       actual layout box, so it always lines up regardless of
+       label length or viewport size). */
+    .bottom-nav {
+      position: fixed; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom));
+      max-width: 468px; margin: 0 auto;
+      height: 64px;
+      background: var(--glass-elevated);
+      -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.2));
+      backdrop-filter: blur(calc(var(--glass-blur) * 1.2));
+      border: 1px solid var(--glass-border);
+      border-radius: 100px;
+      display: flex;
+      z-index: 200;
+      box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi);
+      padding: 6px;
+      gap: 2px;
+    }
+    .nav-indicator {
+      position: absolute; top: 6px; bottom: 6px; left: 6px;
+      width: 0; border-radius: 100px;
+      background: var(--primary-light);
+      box-shadow: var(--glow-accent);
+      transition: transform var(--dur-medium) var(--ease-spring), width var(--dur-medium) var(--ease-spring);
+      z-index: 0; pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) { .nav-indicator { transition: none; } }
+    .nav-btn {
+      flex: 1; position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 3px; cursor: pointer; color: var(--text-muted);
+      font-size: .5rem; font-weight: 700; letter-spacing: .3px; text-transform: uppercase;
+      border: none; background: none; padding: 4px 2px;
+      transition: color var(--dur-fast) var(--ease-smooth);
+      border-radius: 100px;
+    }
+    .nav-btn.active { color: var(--primary); }
+    .nav-btn svg { width: 19px; height: 19px; stroke: currentColor; transition: transform var(--dur-medium) var(--ease-spring); }
+    .nav-btn.active svg { transform: scale(1.14) translateY(-1px); }
+    @media (prefers-reduced-motion: reduce) { .nav-btn.active svg { transform: none; } }
+
+    /* ── GLASS SURFACE (shared) ───────────────────────────
+       Every "card" in the app is a pane of glass floating
+       over the aurora background: translucent fill, blurred
+       backdrop, a hairline border, and a soft top highlight
+       to sell the glass edge. Falls back to a plain solid
+       surface where backdrop-filter isn't supported. */
+    .glass {
+      background: var(--glass);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi);
+    }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .glass { background: var(--surface); }
+    }
+    .press-fx { transition: transform var(--dur-fast) var(--ease-smooth), box-shadow var(--dur-fast) var(--ease-smooth); }
+    .press-fx:active { transform: scale(.98); }
+    @media (prefers-reduced-motion: reduce) { .press-fx:active { transform: none; } }
+
+    /* ── CARDS ──────────────────────────────────────────── */
+    .card {
+      background: var(--glass);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      border-radius: var(--radius);
+      padding: 20px; margin-bottom: 14px;
+      box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi);
+      border: 1px solid var(--glass-border);
+      transition: transform var(--dur-fast) var(--ease-smooth), border-color var(--dur-medium) var(--ease-smooth);
+    }
+    .card-green {
+      background: var(--primary-faint);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      border-radius: var(--radius);
+      padding: 20px; margin-bottom: 14px;
+      border: 1px solid var(--primary-light);
+    }
+    .card-dark {
+      background: linear-gradient(160deg, var(--glass-elevated) 0%, var(--glass) 100%);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      color: var(--text); border-radius: var(--radius);
+      padding: 20px; margin-bottom: 14px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi), var(--glow-gold);
+    }
+    .card h2 {
+      font-size: .68rem; font-weight: 800; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;
+    }
+    .card-dark h2 { color: var(--text-muted); }
+
+    /* ── FORM ELEMENTS ──────────────────────────────────── */
+    .form-row { margin-bottom: 16px; }
+    .form-row label { display: block; font-size: .75rem; font-weight: 700; color: var(--text-mid); margin-bottom: 7px; letter-spacing: .2px; }
+    input[type="text"], input[type="number"], input[type="date"], textarea, select {
+      width: 100%; padding: 11px 14px; border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm); font-size: .9rem; background: var(--glass);
+      color: var(--text); outline: none; font-family: inherit;
+      transition: border-color var(--dur-fast), box-shadow var(--dur-fast), background var(--dur-fast);
+    }
+    input:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+      background: var(--glass-elevated);
+    }
+    textarea { resize: none; line-height: 1.55; }
+
+    /* Toggle switch */
+    .toggle-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 13px 0; border-bottom: 1px solid var(--border);
+    }
+    .toggle-row:last-of-type { border-bottom: none; }
+    .toggle-row .tl { font-size: .85rem; color: var(--text); line-height: 1.4; padding-right: 12px; }
+    .switch { position: relative; width: 48px; height: 28px; flex-shrink: 0; transition: transform var(--dur-fast) var(--ease-spring); }
+    .switch:active { transform: scale(.92); }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: var(--glass-elevated); border: 1px solid var(--glass-border);
+      border-radius: 28px; transition: background var(--dur-medium) var(--ease-smooth);
+    }
+    .slider::before {
+      content: ''; position: absolute;
+      height: 20px; width: 20px; left: 2px; bottom: 2px;
+      background: #fff; border-radius: 50%;
+      transition: transform var(--dur-medium) var(--ease-spring);
+      box-shadow: 0 1px 4px rgba(0,0,0,.25);
+    }
+    .switch input:checked + .slider { background: linear-gradient(135deg, var(--primary-mid), var(--primary)); box-shadow: var(--glow-accent); }
+    .switch input:checked + .slider::before { transform: translateX(20px); }
+    @media (prefers-reduced-motion: reduce) { .switch:active { transform: none; } }
+
+    /* Mood picker */
+    .mood-row { display: flex; gap: 6px; }
+    .mood-btn {
+      flex: 1; padding: 10px 2px; border: 1.5px solid var(--glass-border); border-radius: var(--radius-sm);
+      background: var(--glass); cursor: pointer; font-size: 1.3rem; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-smooth), border-color var(--dur-fast) var(--ease-smooth), box-shadow var(--dur-fast) var(--ease-smooth);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+    }
+    .mood-btn span { font-size: .58rem; color: var(--text-muted); font-weight: 600; }
+    .mood-btn[data-m="1"] { --mood-c: #F87171; }
+    .mood-btn[data-m="2"] { --mood-c: #FB923C; }
+    .mood-btn[data-m="3"] { --mood-c: #F0B23D; }
+    .mood-btn[data-m="4"] { --mood-c: #A3E635; }
+    .mood-btn[data-m="5"] { --mood-c: #4ADE80; }
+    .mood-btn.sel {
+      border-color: var(--mood-c, var(--primary));
+      background: var(--primary-faint);
+      transform: scale(1.05);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--mood-c, var(--primary)) 45%, transparent);
+    }
+    .mood-btn.pop { animation: moodPop var(--dur-medium) var(--ease-spring); }
+    @keyframes moodPop { 0% { transform: scale(1); } 45% { transform: scale(1.22); } 100% { transform: scale(1.05); } }
+    @media (prefers-reduced-motion: reduce) {
+      .mood-btn.pop { animation: none; }
+      .mood-btn.sel { transform: none; }
+    }
+
+    /* Number stepper */
+    .stepper { display: flex; align-items: center; gap: 10px; }
+    .stepper button {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 1.5px solid var(--primary); background: var(--glass); color: var(--primary);
+      font-size: 1.3rem; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      line-height: 1; transition: all var(--dur-fast) var(--ease-spring);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+    }
+    .stepper button:active { background: var(--primary); color: var(--bg); transform: scale(.85); box-shadow: var(--glow-accent); }
+    @media (prefers-reduced-motion: reduce) { .stepper button:active { transform: none; } }
+    .stepper input { text-align: center; width: 68px; border-radius: var(--radius-xs); }
+
+    /* ── BUTTONS ─────────────────────────────────────────── */
+    .btn {
+      display: block; width: 100%; padding: 14px 20px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-mid) 100%);
+      color: var(--on-primary); border: none;
+      border-radius: 100px; font-size: .92rem; font-weight: 700;
+      cursor: pointer; text-align: center; letter-spacing: .2px;
+      font-family: inherit;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25), var(--glow-accent);
+      transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease-smooth), opacity var(--dur-fast);
+    }
+    .btn:active { transform: scale(.96); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+    .btn.outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); box-shadow: none; }
+    .btn.outline:active { background: var(--primary-faint); transform: scale(.96); }
+    @media (prefers-reduced-motion: reduce) { .btn:active, .btn.outline:active { transform: none; } }
+    .btn:disabled { cursor: not-allowed; pointer-events: none; }
+    .btn.amber   { background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 85%, black) 0%, var(--gold) 100%); color: var(--on-gold); box-shadow: 0 4px 14px rgba(0,0,0,.25), var(--glow-gold); }
+    .btn.sm      { padding: 9px 18px; font-size: .8rem; width: auto; display: inline-block; border-radius: 100px; }
+
+    /* ── PROGRESS CIRCLES — "the path" ─────────────────────
+       Still a 7-col grid (robust at any width), but each circle
+       gets a gentle per-column wave offset (--wave, set inline
+       by App._renderProgress) so the 3 rows read as a flowing
+       path rather than a spreadsheet. An SVG line drawn by the
+       same function connects the centers of completed days. */
+    .circles-grid-wrap { position: relative; }
+    .path-line-svg { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: visible; }
+    .circles-grid {
+      display: grid; grid-template-columns: repeat(7,1fr); gap: 8px 4px;
+      position: relative; z-index: 1;
+    }
+    .day-circle {
+      aspect-ratio: 1; border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--glass);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: .62rem; font-weight: 800; color: var(--text-muted);
+      cursor: pointer; transition: background var(--dur-medium) var(--ease-smooth), border-color var(--dur-medium) var(--ease-smooth), box-shadow var(--dur-medium) var(--ease-smooth), opacity var(--dur-medium) var(--ease-smooth), filter var(--dur-medium) var(--ease-smooth), transform var(--dur-fast) var(--ease-spring);
+      position: relative;
+      transform: translateY(var(--wave, 0px));
+    }
+    .day-circle:active { transform: translateY(var(--wave, 0px)) scale(.92); }
+    @media (prefers-reduced-motion: reduce) { .day-circle:active { transform: translateY(var(--wave, 0px)); } }
+    .day-circle .dn  { font-size: .7rem; line-height: 1; font-variant-numeric: tabular-nums; }
+    .day-circle .wl  { font-size: .42rem; line-height: 1; color: var(--text-muted); }
+    .day-circle.done { background: linear-gradient(135deg, var(--primary-mid), var(--primary)); color: var(--on-primary); border-color: transparent; box-shadow: var(--glow-accent); }
+    .day-circle.done .wl { color: var(--on-primary); opacity: .55; }
+    .day-circle.today { border-color: var(--gold); color: var(--gold); background: var(--gold-light); animation: dayPulse 2.4s var(--ease-smooth) infinite; }
+    .day-circle.today.done { background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 85%, black), var(--gold)); color: var(--on-gold); border-color: transparent; }
+    @keyframes dayPulse {
+      0%, 100% { box-shadow: 0 0 0 3px var(--gold-light), var(--glow-gold); }
+      50%      { box-shadow: 0 0 0 6px var(--gold-light), 0 0 28px rgba(240,178,61,.55); }
+    }
+    @media (prefers-reduced-motion: reduce) { .day-circle.today { animation: none; box-shadow: 0 0 0 3px var(--gold-light), var(--glow-gold); } }
+    .day-circle.future { opacity: .3; filter: blur(1.5px); pointer-events: none; }
+    .day-circle:focus-visible, .habit-row:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+      border-radius: var(--radius-xs);
+    }
+
+    /* ── SCREEN TIME CHART ───────────────────────────────── */
+    .chart-wrap { position: relative; height: 100px; margin: 10px 0 6px; }
+    .chart-axes {
+      position: absolute; left: 0; top: 0; bottom: 20px; width: 24px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      align-items: flex-end; padding-right: 5px;
+    }
+    .chart-axes span { font-size: .52rem; color: var(--text-faint); }
+    .chart-inner {
+      position: absolute; left: 28px; right: 0; top: 0; bottom: 20px;
+      display: flex; align-items: flex-end; gap: 3px;
+    }
+    .bar-col {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-end; height: 100%;
+    }
+    .bar {
+      width: 100%; border-radius: 7px 7px 2px 2px; min-height: 3px;
+      background: var(--glass-elevated);
+      transform-origin: bottom;
+      animation: barIn var(--dur-slow) var(--ease-spring) both;
+      animation-delay: calc(var(--i, 0) * 28ms);
+    }
+    .bar.filled { background: linear-gradient(to top, var(--primary-mid), var(--primary)); }
+    .bar.high   { background: linear-gradient(to top, #C7861F, var(--gold)); box-shadow: 0 0 14px rgba(240,178,61,.5); }
+    @keyframes barIn { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+    @media (prefers-reduced-motion: reduce) { .bar { animation: none; } }
+    .bar-label { font-size: .46rem; color: var(--text-muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+
+    .combo-legend { display: flex; gap: 16px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+    .combo-legend span { display: flex; align-items: center; gap: 5px; font-size: .62rem; font-weight: 700; color: var(--text-mid); }
+    .combo-legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+    /* ── CHALLENGE CARD ──────────────────────────────────── */
+    .challenge-card {
+      background: linear-gradient(160deg, var(--glass-elevated) 0%, var(--glass) 100%);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      color: var(--text);
+      border-radius: var(--radius); padding: 24px 20px;
+      margin-bottom: 14px; text-align: center;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi), var(--glow-accent);
+      position: relative; overflow: hidden;
+      transition: box-shadow var(--dur-medium) var(--ease-smooth);
+    }
+    .challenge-card::before {
+      content: ''; position: absolute;
+      top: -50px; right: -50px; width: 140px; height: 140px;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+      opacity: .18; border-radius: 50%;
+    }
+    .challenge-card::after {
+      content: ''; position: absolute;
+      bottom: -30px; left: -30px; width: 100px; height: 100px;
+      background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+      opacity: .14; border-radius: 50%;
+    }
+    .challenge-card.done { box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi), var(--glow-accent), var(--glow-accent); }
+    .day-badge {
+      display: inline-block;
+      background: var(--primary-light);
+      color: var(--primary); font-size: .68rem; font-weight: 800;
+      padding: 4px 14px; border-radius: 100px;
+      margin-bottom: 12px; letter-spacing: .5px; text-transform: uppercase;
+      border: 1px solid var(--glass-border);
+      font-variant-numeric: tabular-nums;
+    }
+    .challenge-text { font-size: 1rem; font-weight: 700; line-height: 1.45; margin-bottom: 16px; position: relative; z-index: 1; }
+
+    /* ── HABIT LIST ──────────────────────────────────────── */
+    .habit-cat-title {
+      font-size: .65rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--text-muted);
+      padding: 4px 0; margin: 14px 0 6px;
+    }
+    .habit-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 0; border-bottom: 1px solid var(--border); cursor: pointer;
+      transition: opacity var(--dur-fast), transform var(--dur-fast) var(--ease-smooth);
+      animation: rowIn var(--dur-medium) var(--ease-smooth) both;
+      animation-delay: calc(var(--i, 0) * 40ms);
+    }
+    .habit-row:last-child { border-bottom: none; }
+    .habit-row:active { transform: scale(.98); }
+    @keyframes rowIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      .habit-row { animation: none; }
+      .habit-row:active { transform: none; }
+    }
+    .hcheck {
+      width: 22px; height: 22px; border: 2px solid var(--border);
+      border-radius: 6px; flex-shrink: 0; display: flex;
+      align-items: center; justify-content: center; background: var(--surface);
+      transition: all var(--dur-fast) var(--ease-spring);
+    }
+    .habit-row.checked .hcheck { background: linear-gradient(135deg, var(--primary-mid), var(--primary)); border-color: transparent; transform: scale(1.08); box-shadow: var(--glow-accent); }
+    .habit-row.checked .hcheck::after { content: '✓'; color: var(--on-primary); font-size: .78rem; font-weight: 900; }
+    .hlabel { font-size: .86rem; flex: 1; line-height: 1.4; }
+    .habit-row.checked .hlabel { text-decoration: line-through; color: var(--text-muted); }
+
+    /* ── WEEKLY TABS ─────────────────────────────────────── */
+    .tab-row { display: flex; gap: 6px; margin-bottom: 16px; }
+    .tab-btn {
+      flex: 1; padding: 9px 4px; border: 1.5px solid var(--border);
+      border-radius: 100px; background: var(--surface); color: var(--text-muted);
+      font-size: .78rem; font-weight: 700; cursor: pointer; font-family: inherit;
+      transition: all .18s;
+    }
+    .tab-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--glass-border); box-shadow: var(--glow-accent); }
+
+    /* ── STATS STRIP ─────────────────────────────────────── */
+    .stats-row { display: flex; gap: 10px; margin-bottom: 14px; }
+    .stat-card {
+      flex: 1; border-radius: var(--radius-sm); padding: 14px 8px; text-align: center;
+      background: var(--glass);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      box-shadow: var(--shadow-xs), inset 0 1px 0 var(--glass-hi);
+      border: 1px solid var(--glass-border); border-top: 2px solid var(--primary);
+      transition: transform var(--dur-fast) var(--ease-spring);
+    }
+    .stat-val   { font-size: 1.8rem; font-weight: 900; color: var(--primary); line-height: 1; }
+    .stat-lbl   { font-size: .58rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 4px; font-weight: 700; }
+
+    /* ── BADGES ──────────────────────────────────────────── */
+    .badge-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .badge-chip {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 10px 8px; border-radius: var(--radius-sm); min-width: 68px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      opacity: .38; filter: grayscale(1);
+      transition: opacity var(--dur-medium), filter var(--dur-medium), transform var(--dur-medium) var(--ease-spring);
+    }
+    .badge-chip.earned {
+      opacity: 1; filter: none;
+      background: var(--primary-faint); border-color: var(--primary);
+      box-shadow: var(--glow-accent);
+    }
+    .badge-icon { font-size: 1.5rem; line-height: 1; }
+    .badge-label { font-size: .56rem; font-weight: 800; color: var(--text-mid); text-align: center; line-height: 1.25; }
+
+    /* ── HOME BANNER ─────────────────────────────────────── */
+    #home-banner {
+      background: linear-gradient(160deg, var(--glass-elevated) 0%, var(--glass) 100%);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      border-radius: var(--radius); padding: 20px; margin-bottom: 14px;
+      color: var(--text);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi), var(--glow-accent);
+      display: flex; align-items: center; gap: 16px;
+      position: relative; overflow: hidden;
+    }
+    #home-banner::before {
+      content: ''; position: absolute;
+      top: -30px; right: -30px; width: 100px; height: 100px;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+      opacity: .2; border-radius: 50%;
+    }
+    .banner-ring { flex-shrink: 0; filter: drop-shadow(0 0 8px rgba(74,222,128,.35)); }
+    .banner-info { flex: 1; }
+    .banner-info .bi-title { font-size: 1.1rem; font-weight: 900; line-height: 1.2; }
+    .banner-info .bi-sub   { font-size: .75rem; color: var(--text-muted); margin-top: 5px; }
+    .ring-bg   { fill: none; stroke: var(--glass-border); }
+    .ring-fill { fill: none; stroke: url(#ringGradient); stroke-linecap: round; transition: stroke-dashoffset 1.1s var(--ease-smooth); }
+    .ring-text-val { font-size: 14px; font-weight: 900; fill: var(--text); font-family: 'Inter',sans-serif; }
+    .ring-text-sub { font-size: 7px;  font-weight: 600; fill: var(--text-muted); font-family: 'Inter',sans-serif; }
+
+    /* ── QUOTE BOX ───────────────────────────────────────── */
+    .quote-box {
+      background: linear-gradient(160deg, var(--gold-light) 0%, var(--glass) 100%);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      color: var(--text);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius); padding: 18px 20px;
+      font-style: italic; font-size: .85rem; line-height: 1.6;
+      margin-bottom: 14px; text-align: center;
+      box-shadow: var(--glass-shadow), var(--glow-gold);
+    }
+
+    /* ── CERTIFICATE ─────────────────────────────────────── */
+    .cert-box {
+      border: 1px solid var(--glass-border); border-radius: var(--radius);
+      padding: 28px 24px; text-align: center;
+      background: var(--glass-elevated);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      margin: 14px 0;
+      box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi);
+    }
+    .cert-box h3 { font-size: .68rem; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); }
+    .cert-name  { font-size: 1.5rem; font-weight: 900; color: var(--primary); margin: 12px 0 8px; border-bottom: 2px solid var(--primary-light); padding-bottom: 8px; }
+    .cert-title { font-size: .92rem; font-weight: 900; color: var(--primary); margin: 8px 0; letter-spacing: .5px; }
+    .cert-foot  { display: flex; justify-content: space-between; margin-top: 20px; font-size: .72rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px; }
+
+    /* ── ONBOARDING ──────────────────────────────────────── */
+    #onboarding {
+      min-height: 100svh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 40px 24px; text-align: center;
+    }
+    #onboarding .logo { font-size: 4rem; margin-bottom: 14px; filter: drop-shadow(0 0 20px rgba(74,222,128,.35)); }
+    #onboarding h1 { color: var(--text); font-size: 1.6rem; font-weight: 900; line-height: 1.2; margin-bottom: 8px; }
+    #onboarding p  { color: var(--text-muted); font-size: .88rem; margin-bottom: 32px; line-height: 1.6; }
+    #onboarding .card { text-align: left; width: 100%; max-width: 420px; }
+
+    /* ── MISC UTILITIES ──────────────────────────────────── */
+    .sec-title  { font-size: 1.1rem; font-weight: 900; color: var(--text); margin-bottom: 14px; letter-spacing: -.2px; }
+    .note       { font-size: .8rem; color: var(--text-mid); line-height: 1.55; }
+    .tc         { text-align: center; }
+    .mt8        { margin-top: 8px; }
+    .mt12       { margin-top: 12px; }
+    .mb12       { margin-bottom: 12px; }
+    .divider    { height: 1px; background: var(--border); margin: 14px 0; }
+    .amber-tag  { display: inline-block; background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 85%, black), var(--gold)); color: var(--on-gold); font-size: .62rem; font-weight: 800; padding: 3px 10px; border-radius: 100px; text-transform: uppercase; letter-spacing: .3px; }
+
+    /* ── DAY NAV ROW ─────────────────────────────────────── */
+    .day-nav { display: flex; gap: 10px; margin-bottom: 12px; }
+    .day-nav .btn { font-size: .8rem; padding: 10px 12px; }
+
+    /* ── LANGUAGE PICKER ────────────────────────────────── */
+    #lang-picker {
+      min-height: 100svh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 40px 24px; text-align: center;
+    }
+    #lang-picker .logo { font-size: 3.5rem; margin-bottom: 12px; filter: drop-shadow(0 0 20px rgba(74,222,128,.35)); }
+    #lang-picker h1   { color: var(--text); font-size: 1.45rem; font-weight: 900; margin-bottom: 6px; }
+    #lang-picker p    { color: var(--text-muted); font-size: .82rem; margin-bottom: 28px; }
+    .lang-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 380px; }
+    .lang-btn  {
+      padding: 14px 12px; border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm); background: var(--glass);
+      color: var(--text); font-size: .9rem; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 10px; justify-content: center;
+      transition: all var(--dur-fast) var(--ease-smooth); font-family: inherit;
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      box-shadow: inset 0 1px 0 var(--glass-hi);
+    }
+    .lang-btn:hover, .lang-btn:active { background: var(--glass-elevated); border-color: var(--primary); transform: scale(.97); box-shadow: var(--glow-accent); }
+    @media (prefers-reduced-motion: reduce) { .lang-btn:active { transform: none; } }
+    .lang-btn .flag { font-size: 1.35rem; }
+
+    /* ── SETTINGS MODAL ──────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 400;
+      background: rgba(0,0,0,.5);
+      display: flex; align-items: flex-end;
+      animation: fadeBg .2s ease;
+      backdrop-filter: blur(4px);
+    }
+    @keyframes fadeBg { from { opacity:0; } to { opacity:1; } }
+    .modal-sheet {
+      background: var(--glass-elevated);
+      -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.4));
+      backdrop-filter: blur(calc(var(--glass-blur) * 1.4));
+      border: 1px solid var(--glass-border); border-bottom: none;
+      border-radius: 28px 28px 0 0;
+      padding: 0 22px calc(36px + env(safe-area-inset-bottom)); width: 100%; max-height: 88svh; overflow-y: auto;
+      animation: slideUp var(--dur-slow) var(--ease-spring);
+      box-shadow: 0 -8px 60px rgba(0,0,0,.3), inset 0 1px 0 var(--glass-hi);
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      .modal-sheet { animation: none; }
+      .modal-overlay { animation: none; }
+    }
+    .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 16px auto 20px; }
+    .modal-sheet h2 { font-size: 1.1rem; font-weight: 900; color: var(--text); margin-bottom: 20px; letter-spacing: -.2px; }
+    .settings-section { margin-bottom: 24px; }
+    .settings-section h3 { font-size: .67rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 12px; }
+    .lang-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .lang-chip {
+      padding: 8px 16px; border: 1px solid var(--glass-border); border-radius: 100px;
+      background: var(--glass); color: var(--text-mid); font-size: .8rem; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: all var(--dur-fast) var(--ease-spring);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+    }
+    .lang-chip:active { transform: scale(.95); }
+    .lang-chip.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); box-shadow: var(--glow-accent); }
+    @media (prefers-reduced-motion: reduce) { .lang-chip:active { transform: none; } }
+    .notif-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .notif-row label { font-size: .88rem; color: var(--text); }
+    input[type="time"] { width: auto; padding: 8px 12px; border-radius: var(--radius-xs); font-size: .9rem; }
+    .danger-btn {
+      width: 100%; padding: 13px; border: 1.5px solid var(--danger-border); border-radius: 100px;
+      background: var(--danger-bg); color: var(--danger-text); font-size: .88rem; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: all .18s;
+    }
+    .danger-btn:active { background: var(--danger-bg-active); }
+    /* Header gear button */
+    .hdr-gear { background: none; border: none; color: var(--text-mid); cursor: pointer; padding: 6px; margin-left: auto; display: flex; align-items: center; border-radius: 8px; transition: color .18s, background .18s, transform var(--dur-fast) var(--ease-spring); }
+    .hdr-gear:active { background: var(--glass-elevated); transform: rotate(45deg); }
+    @media (prefers-reduced-motion: reduce) { .hdr-gear:active { transform: none; } }
+    .hdr-gear svg { width: 20px; height: 20px; stroke: currentColor; }
+    .app-header { display: flex; align-items: flex-start; }
+    .hdr-text { flex: 1; }
+
+    /* ── PRINT STYLES ────────────────────────────────────── */
+    @media print {
+      body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  AURORA BACKGROUND — fixed, behind everything, purely  -->
+<!--  decorative (aria-hidden). See App._applyTheme() note: -->
+<!--  colors follow the same tokens as the rest of the UI.  -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="aurora-bg" aria-hidden="true">
+  <div class="starfield" id="starfield"></div>
+  <div class="aurora-blob blob-1"></div>
+  <div class="aurora-blob blob-2"></div>
+  <div class="aurora-blob blob-3"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  LANGUAGE PICKER                                      -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="lang-picker">
+  <div class="logo">📵</div>
+  <h1>21-Day Digital Detox</h1>
+  <p>Choose your language / Vyberte jazyk / Wähle deine Sprache</p>
+  <div class="lang-grid">
+    <button class="lang-btn" onclick="App.pickLang('en')"><span class="flag">🇬🇧</span>English</button>
+    <button class="lang-btn" onclick="App.pickLang('cs')"><span class="flag">🇨🇿</span>Čeština</button>
+    <button class="lang-btn" onclick="App.pickLang('de')"><span class="flag">🇩🇪</span>Deutsch</button>
+    <button class="lang-btn" onclick="App.pickLang('es')"><span class="flag">🇪🇸</span>Español</button>
+    <button class="lang-btn" onclick="App.pickLang('fr')"><span class="flag">🇫🇷</span>Français</button>
+    <button class="lang-btn" onclick="App.pickLang('ru')"><span class="flag">🇷🇺</span>Русский</button>
+    <button class="lang-btn" onclick="App.pickLang('pl')"><span class="flag">🇵🇱</span>Polski</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  ONBOARDING                                           -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="onboarding">
+  <div class="logo">📵</div>
+  <h1 data-i18n="appName">21-Day Digital Detox</h1>
+  <p data-i18n="tagline">Take back control of your screen time and rediscover life beyond the scroll.</p>
+  <div class="card">
+    <div class="form-row">
+      <label data-i18n="yourName">Your name</label>
+      <input type="text" id="ob-name" data-i18n-ph="namePh" placeholder="Enter your name…" autocomplete="name">
+    </div>
+    <div class="form-row">
+      <label data-i18n="startDate">Challenge start date</label>
+      <input type="date" id="ob-date">
+    </div>
+    <div class="form-row">
+      <label data-i18n="intentionLabel">My intention for these 21 days</label>
+      <textarea id="ob-intention" rows="3" data-i18n-ph="intentionPh" placeholder="e.g. Spend more quality time with family…"></textarea>
+    </div>
+    <button class="btn" id="ob-start-btn" data-i18n="startBtn" onclick="App.start()">Start My Detox Journey →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  MAIN APP                                             -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="app" style="display:none; flex-direction:column; min-height:100svh;">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="hdr-text">
+      <h1>📵 <span data-i18n="appName">21-Day Digital Detox</span></h1>
+      <div class="sub" id="hdr-sub">Day 1 of 21</div>
+    </div>
+    <button class="hdr-gear" onclick="App.openSettings()" aria-label="Settings">
+      <svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+
+  <!-- ── HOME ───────────────────────────────────────────── -->
+  <div class="page active" id="page-home">
+    <div id="home-banner"></div>
+    <div id="home-badges"></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val" id="s-streak">0</div><div class="stat-lbl" data-i18n="streak">Streak</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-done">0</div><div class="stat-lbl" data-i18n="challenges">Challenges</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-mood">—</div><div class="stat-lbl" data-i18n="avgMood">Avg Mood</div></div>
+    </div>
+    <div class="card" id="home-challenge"></div>
+    <div class="quote-box" id="home-quote"></div>
+    <div class="card" id="home-howto"></div>
+  </div>
+
+  <!-- ── TODAY ──────────────────────────────────────────── -->
+  <div class="page" id="page-today">
+    <div class="sec-title" id="today-title">Today's Check-In</div>
+
+    <div class="challenge-card">
+      <div class="day-badge" id="ch-badge">Day 1</div>
+      <div class="challenge-text" id="ch-text"></div>
+      <div id="ch-edit-panel" style="display:none;position:relative;z-index:1;">
+        <textarea id="ch-edit-input" rows="2" style="margin-bottom:8px;"></textarea>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn sm" onclick="App.saveCustomChallenge()" data-i18n="saveBtn">Save</button>
+          <button class="btn outline sm" onclick="App.closeChallengeEdit()" data-i18n="cancelBtn">Cancel</button>
+          <button class="btn outline sm" id="ch-reset-btn" onclick="App.resetCustomChallenge()" data-i18n="resetChallengeBtn" style="display:none;">Reset to default</button>
+        </div>
+      </div>
+      <div id="ch-actions" style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;position:relative;z-index:1;">
+        <button class="btn amber sm" id="ch-btn" onclick="App.toggleChallenge()">Mark as Done ✓</button>
+        <button class="btn outline sm" onclick="App.openChallengeEdit()" data-i18n="editChallengeBtn" style="border-color:var(--border);color:var(--text);">✎ Customize</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="dailyLog">Daily Log</h2>
+
+      <div class="form-row">
+        <label data-i18n="screenTimeHrs">Screen Time (hours)</label>
+        <div class="stepper">
+          <button onclick="App.step('fld-screen',-.5)">−</button>
+          <input type="number" id="fld-screen" min="0" max="24" step=".5" value="0" oninput="App.saveDay()">
+          <button onclick="App.step('fld-screen',.5)">+</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label data-i18n="sleepHrs">Sleep (hours)</label>
+        <div class="stepper">
+          <button onclick="App.step('fld-sleep',-.5)">−</button>
+          <input type="number" id="fld-sleep" min="0" max="24" step=".5" value="7" oninput="App.saveDay()">
+          <button onclick="App.step('fld-sleep',.5)">+</button>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <span class="tl" id="lbl-conversation" data-i18n="conversation">Did you stay off your phone for 1 hour after waking up AND 1 hour before bed?</span>
+        <label class="switch"><input type="checkbox" id="fld-conversation" onchange="App.saveDay()"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span class="tl" id="lbl-creative" data-i18n="creative">Did you do something creative or physical today?</span>
+        <label class="switch"><input type="checkbox" id="fld-creative" onchange="App.saveDay()"><span class="slider"></span></label>
+      </div>
+
+      <div class="form-row mt12">
+        <label data-i18n="moodToday">Mood today</label>
+        <div class="mood-row" id="mood-row">
+          <button class="mood-btn" data-m="1" onclick="App.setMood(1)">😔<span data-i18n="mood1">Terrible</span></button>
+          <button class="mood-btn" data-m="2" onclick="App.setMood(2)">😕<span data-i18n="mood2">Bad</span></button>
+          <button class="mood-btn" data-m="3" onclick="App.setMood(3)">😐<span data-i18n="mood3">Okay</span></button>
+          <button class="mood-btn" data-m="4" onclick="App.setMood(4)">😊<span data-i18n="mood4">Good</span></button>
+          <button class="mood-btn" data-m="5" onclick="App.setMood(5)">😄<span data-i18n="mood5">Amazing</span></button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label data-i18n="oneWin">One win today</label>
+        <textarea id="fld-win" rows="2" data-i18n-ph="winPh" placeholder="What's one thing you're proud of today…" oninput="App.saveDay()"></textarea>
+      </div>
+    </div>
+
+    <div class="day-nav">
+      <button class="btn outline" id="btn-prev-day" data-i18n="prevDay" onclick="App.navDay(-1)">← Prev Day</button>
+      <button class="btn outline" id="btn-next-day" data-i18n="nextDay" onclick="App.navDay(1)">Next Day →</button>
+    </div>
+    <div id="view-info" class="note tc"></div>
+  </div>
+
+  <!-- ── PROGRESS ───────────────────────────────────────── -->
+  <div class="page" id="page-progress">
+    <div class="sec-title" data-i18n="myProgress">My Progress</div>
+
+    <div class="card">
+      <h2 data-i18n="journey21">21-Day Journey</h2>
+      <div class="circles-grid-wrap">
+        <svg class="path-line-svg" id="path-line"></svg>
+        <div class="circles-grid" id="circles"></div>
+      </div>
+      <div class="note tc mt8" data-i18n="tapDay">Tap a day to view &amp; edit it</div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="screenJourney">Screen Time Journey (hrs / day)</h2>
+      <div class="chart-wrap">
+        <div class="chart-axes">
+          <span>8</span><span>6</span><span>4</span><span>2</span><span>0</span>
+        </div>
+        <div class="chart-inner" id="chart"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0 26px;">
+        <span class="note" data-i18n="day1">Day 1</span><span class="note" data-i18n="day21">Day 21</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="moodScreenSleep">Mood, Screen Time & Sleep</h2>
+      <div class="chart-wrap" style="height:120px;">
+        <svg id="combo-chart" viewBox="0 0 315 120" preserveAspectRatio="none" style="width:100%;height:100%;"></svg>
+      </div>
+      <div class="combo-legend">
+        <span><i style="background:var(--chart-mood);"></i><span data-i18n="legendMood">Mood</span></span>
+        <span><i style="background:var(--chart-screen);"></i><span data-i18n="legendScreen">Screen</span></span>
+        <span><i style="background:var(--chart-sleep);"></i><span data-i18n="legendSleep">Sleep</span></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="myIntention">My Intention</h2>
+      <p class="note" id="prog-intention" style="font-style:italic;"></p>
+    </div>
+  </div>
+
+  <!-- ── HABITS ─────────────────────────────────────────── -->
+  <div class="page" id="page-habits">
+    <div class="sec-title" data-i18n="habitReplace">Habit Replacement</div>
+    <p class="note mb12" data-i18n="habitNote">Instead of reaching for your phone, try one of these. Tap to mark what you've tried.</p>
+    <div id="habit-list"></div>
+    <div class="card mt12">
+      <h2 data-i18n="myOwnRepl">My Own Replacements</h2>
+      <div id="custom-list"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <input type="text" id="custom-input" data-i18n-ph="addHabitPh" placeholder="Add your own habit…" style="flex:1;">
+        <button class="btn sm" onclick="App.addCustom()" data-i18n="add">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REFLECT ────────────────────────────────────────── -->
+  <div class="page" id="page-reflect">
+    <div class="sec-title" data-i18n="weeklyReflect">Weekly Reflections</div>
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="App.setWeek(1)" data-week="1">Week 1</button>
+      <button class="tab-btn"        onclick="App.setWeek(2)" data-week="2">Week 2</button>
+      <button class="tab-btn"        onclick="App.setWeek(3)" data-week="3">Week 3</button>
+    </div>
+    <div id="reflect-body"></div>
+  </div>
+
+  <!-- ── FINISH ─────────────────────────────────────────── -->
+  <div class="page" id="page-finish">
+    <div class="sec-title" data-i18n="youDidIt">🎉 You Did It!</div>
+    <div class="card-dark tc mb12">
+      <div style="font-size:2rem;margin-bottom:6px;">🏆</div>
+      <div class="note" style="opacity:.85;" data-i18n="finalReflect">Day 21 — Final Reflection</div>
+    </div>
+    <div class="card"><div id="final-form"></div></div>
+
+    <div class="cert-box" id="cert-box">
+      <h3 data-i18n="certHeader">— Certificate of Completion —</h3>
+      <p class="note mt8" data-i18n="certBody">This is to certify that</p>
+      <div class="cert-name" id="cert-name"></div>
+      <p class="note" data-i18n="certCompleted">has successfully completed the</p>
+      <div class="cert-title" data-i18n="certChallenge">21-DAY DIGITAL DETOX CHALLENGE</div>
+      <p class="note" style="font-size:.75rem;margin-top:4px;color:var(--text-light);" data-i18n="certSub">and has taken a meaningful step toward a healthier relationship with technology.</p>
+      <div class="cert-foot">
+        <span id="cert-date"></span>
+        <span data-i18n="certDone">✓ Completed</span>
+      </div>
+    </div>
+
+    <button class="btn outline mt8" onclick="App.printCert()" data-i18n="printCert">🖨 Print Certificate</button>
+    <button class="btn amber mt8" onclick="App.downloadCertImage()" data-i18n="downloadCertBtn">⬇ Download as Image</button>
+    <canvas id="cert-canvas" width="1000" height="640" style="display:none;"></canvas>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settings-modal" class="modal-overlay" style="display:none;" onclick="App.closeSettingsBg(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h2 id="set-title" data-i18n="settingsTitle">Settings</h2>
+
+      <div class="settings-section">
+        <h3 id="set-appearance-title" data-i18n="settingsAppearance">Appearance</h3>
+        <div class="lang-chips">
+          <button class="lang-chip" data-theme-opt="auto"  onclick="App.setTheme('auto')"  data-i18n="themeAuto">Auto</button>
+          <button class="lang-chip" data-theme-opt="light" onclick="App.setTheme('light')" data-i18n="themeLight">Light</button>
+          <button class="lang-chip" data-theme-opt="dark"  onclick="App.setTheme('dark')"  data-i18n="themeDark">Dark</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3 id="set-lang-title" data-i18n="settingsLang">Language</h3>
+        <div class="lang-chips">
+          <button class="lang-chip" data-lc="en" onclick="App.changeLang('en')">🇬🇧 English</button>
+          <button class="lang-chip" data-lc="cs" onclick="App.changeLang('cs')">🇨🇿 Čeština</button>
+          <button class="lang-chip" data-lc="de" onclick="App.changeLang('de')">🇩🇪 Deutsch</button>
+          <button class="lang-chip" data-lc="es" onclick="App.changeLang('es')">🇪🇸 Español</button>
+          <button class="lang-chip" data-lc="fr" onclick="App.changeLang('fr')">🇫🇷 Français</button>
+          <button class="lang-chip" data-lc="ru" onclick="App.changeLang('ru')">🇷🇺 Русский</button>
+          <button class="lang-chip" data-lc="pl" onclick="App.changeLang('pl')">🇵🇱 Polski</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3 id="set-notif-title" data-i18n="settingsNotif">Daily Reminder</h3>
+        <div class="notif-row">
+          <label id="set-notif-enable" data-i18n="settingsNotifEnable">Enable daily reminder</label>
+          <label class="switch"><input type="checkbox" id="notif-toggle" onchange="App.saveNotifSettings()"><span class="slider"></span></label>
+        </div>
+        <div class="notif-row">
+          <label id="set-notif-time-lbl" data-i18n="settingsNotifTimeLbl">Reminder time</label>
+          <input type="time" id="notif-time" value="08:00" onchange="App.saveNotifSettings()">
+        </div>
+        <button class="btn sm" id="notif-perm-btn" onclick="App.requestNotifPermission()" style="margin-top:6px;width:100%;" data-i18n="settingsPermBtn">Allow notifications</button>
+        <div id="notif-status" class="note" style="margin-top:6px;text-align:center;"></div>
+        <div id="notif-ios-note" class="note" style="margin-top:6px;"></div>
+      </div>
+
+      <div class="settings-section">
+        <h3 id="set-runs-title" data-i18n="pastRunsTitle">Past Runs</h3>
+        <div id="past-runs-list"></div>
+        <button class="btn outline sm mt12" style="width:100%;" onclick="App.startNewChallenge()" data-i18n="settingsNewChallenge">Start a New Challenge</button>
+      </div>
+
+      <div class="settings-section">
+        <h3 id="set-danger-title" data-i18n="settingsDanger">Danger Zone</h3>
+        <button class="danger-btn" onclick="App.resetProgress()" id="set-reset-btn" data-i18n="settingsReset">Reset all progress</button>
+      </div>
+
+      <button class="btn" onclick="App.closeSettings()" id="set-close-btn" data-i18n="settingsClose">Close</button>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <div class="nav-indicator" id="nav-indicator"></div>
+    <button class="nav-btn active" id="nav-home"     onclick="App.go('home')">
+      <svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span data-i18n="navHome">Home</span>
+    </button>
+    <button class="nav-btn" id="nav-today"    onclick="App.go('today')">
+      <svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span data-i18n="navToday">Today</span>
+    </button>
+    <button class="nav-btn" id="nav-progress" onclick="App.go('progress')">
+      <svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span data-i18n="navProgress">Progress</span>
+    </button>
+    <button class="nav-btn" id="nav-habits"   onclick="App.go('habits')">
+      <svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span data-i18n="navHabits">Habits</span>
+    </button>
+    <button class="nav-btn" id="nav-reflect"  onclick="App.go('reflect')">
+      <svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span data-i18n="navReflect">Reflect</span>
+    </button>
+    <button class="nav-btn" id="nav-finish"   onclick="App.go('finish')">
+      <svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+      <span data-i18n="navFinish">Finish</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   i18n — ALL user-visible strings live here.
+   To add a language: copy the 'en' block, give it a new key
+   (e.g. 'cs', 'de', 'fr', 'es', 'sk', 'pl' …), translate.
+   Then call App.setLang('cs') to switch.
+   ═══════════════════════════════════════════════════════════ */
+const STRINGS = {
+  en: {
+    appName: '21-Day Digital Detox',
+    tagline: 'Take back control of your screen time and rediscover life beyond the scroll.',
+    yourName: 'Your name', namePh: 'Enter your name…',
+    startDate: 'Challenge start date',
+    intentionLabel: 'My intention for these 21 days',
+    intentionPh: 'e.g. Spend more quality time with family…',
+    startBtn: 'Start My Detox Journey →',
+    dayOf21: (d) => `Day ${d} of 21`,
+    streak: 'Streak', challenges: 'Challenges', avgMood: 'Avg Mood',
+    todayChallenge: "Today's Challenge",
+    logToday: 'Log Today →',
+    todayCheckin: "Today's Check-In",
+    dayLog: (d) => `Day ${d} Log`,
+    dailyLog: 'Daily Log',
+    screenTimeHrs: 'Screen Time (hours)',
+    sleepHrs: 'Sleep (hours)',
+    conversation: 'Did you stay off your phone for 1 hour after waking up AND 1 hour before bed?',
+    creative: 'Did you do something creative or physical today?',
+    moodToday: 'Mood today',
+    moodLabels: ['', 'Terrible', 'Bad', 'Okay', 'Good', 'Amazing'],
+    moodEmoji:  ['', '😔',      '😕',  '😐',   '😊',   '😄'],
+    oneWin: 'One win today',
+    winPh: "What's one thing you're proud of today…",
+    prevDay: '← Prev Day', nextDay: 'Next Day →',
+    viewingDay: (d, past) => `Viewing Day ${d} ${past ? '(past)' : '(future)'}`,
+    myProgress: 'My Progress',
+    journey21: '21-Day Journey',
+    tapDay: 'Tap a day to view & edit it',
+    screenJourney: 'Screen Time Journey (hrs / day)',
+    myIntention: 'My Intention',
+    noIntention: 'No intention set yet.',
+    habitReplace: 'Habit Replacement',
+    habitNote: "Instead of reaching for your phone, try one of these. Tap to mark what you've tried.",
+    myOwnRepl: 'My Own Replacements',
+    addHabitPh: 'Add your own habit…',
+    add: 'Add',
+    weeklyReflect: 'Weekly Reflections',
+    week: (n) => `Week ${n}`,
+    reflectQs: [
+      "What is ONE thing you're proud of this week?",
+      "What was your average daily screen time? Lower than last week?",
+      "What was the hardest moment? What triggered you?",
+      "What did you discover when you weren't on your phone?",
+      "Which challenge did you enjoy most? Why?",
+      "What will you do differently next week?"
+    ],
+    weekStats: (n) => `WEEK ${n} STATS`,
+    totalScreen: 'Total screen time',
+    challengesDoneOf7: 'Challenges done',
+    avgMoodOf5: 'Average mood',
+    writeThoughts: 'Write your thoughts…',
+    youDidIt: '🎉 You Did It!',
+    finalReflect: 'Day 21 — Final Reflection',
+    finalQs: [
+      { key: 'compared', q: 'How do you feel compared to Day 1?' },
+      { key: 'biggest',  q: 'What is the BIGGEST change you noticed in yourself?' },
+      { key: 'keep',     q: 'What habit will you keep going after Day 21?' },
+      { key: 'friend',   q: 'What would you tell a friend starting this challenge?' }
+    ],
+    certHeader: '— Certificate of Completion —',
+    certBody: 'This is to certify that',
+    certCompleted: 'has successfully completed the',
+    certChallenge: '21-DAY DIGITAL DETOX CHALLENGE',
+    certSub: 'and has taken a meaningful step toward a healthier relationship with technology.',
+    printCert: '🖨 Print Certificate',
+    markDone: 'Mark as Done ✓',
+    markedDone: '✓ Challenge Done!',
+    quotes: {
+      default: '"Almost everything will work again if you unplug it for a few minutes, including you." — Anne Lamott',
+      1: '"The first step toward change is awareness." — Nathaniel Branden',
+      2: '"We are what we repeatedly do." — Aristotle',
+      3: '"You are enough. You have enough. You do enough." — Brené Brown'
+    },
+    day1: 'Day 1', day21: 'Day 21',
+    navHome: 'Home', navToday: 'Today', navProgress: 'Progress',
+    navHabits: 'Habits', navReflect: 'Reflect', navFinish: 'Finish',
+    certDone: '✓ Completed',
+    settingsTitle: 'Settings', settingsLang: 'Language',
+    settingsDanger: 'Danger Zone',
+    settingsNotif: 'Daily Reminder',
+    settingsNotifEnable: 'Enable daily reminder',
+    settingsNotifTimeLbl: 'Reminder time',
+    settingsPermBtn: 'Allow notifications',
+    settingsPermGranted: 'Notifications allowed ✓',
+    settingsReset: 'Reset all progress',
+    settingsClose: 'Close',
+    settingsAppearance: 'Appearance',
+    themeAuto: 'Auto', themeLight: 'Light', themeDark: 'Dark',
+    moodScreenSleep: 'Mood, Screen Time & Sleep',
+    legendMood: 'Mood', legendScreen: 'Screen', legendSleep: 'Sleep',
+    badgesTitle: 'Milestones',
+    badgeDay: (n) => `Day ${n}`,
+    badgeStreak: (n) => `${n}-day streak`,
+    settingsNewChallenge: 'Start a New Challenge',
+    newChallengeConfirm: 'This will archive your current 21-day progress and start a fresh challenge. Your history will be saved. Continue?',
+    pastRunsTitle: 'Past Runs',
+    noPastRuns: 'No past runs yet.',
+    runCompletedOn: (date) => `Finished ${date}`,
+    downloadCertBtn: '⬇ Download as Image',
+    editChallengeBtn: '✎ Customize',
+    editChallengeTitle: 'Edit Challenge',
+    editChallengePh: 'Write your own challenge for this day…',
+    resetChallengeBtn: 'Reset to default',
+    saveBtn: 'Save',
+    cancelBtn: 'Cancel',
+    notifIosNote: "📱 On iPhone, add this app to your Home Screen first (Share → Add to Home Screen) — Safari can't send notifications otherwise.",
+    notifTitle: 'Time to log your day! 📵',
+    notifCta: 'Open the app and log your day.',
+    howItWorks: 'How It Works',
+    howItWorksBullets: [
+      ['📋', '<strong>Track daily</strong>', '— log screen time, mood & habits'],
+      ['🎯', '<strong>Do the challenges</strong>', '— one screen-free task per day'],
+      ['💭', '<strong>Reflect weekly</strong>', '— notice patterns, celebrate wins'],
+      ['🔄', '<strong>Replace, don\'t remove</strong>', '— swap phone time for real life'],
+      ['🎉', '<strong>Celebrate Day 21</strong>', '— you earned it!']
+    ],
+    habitCats: {
+      'Mental & Creative':  'Mental & Creative',
+      'Physical & Active':  'Physical & Active',
+      'Social & Connecting':'Social & Connecting',
+      'Calm & Restorative': 'Calm & Restorative'
+    }
+  }
+  /* Each non-English block only overrides strings that differ.
+     t() falls back to STRINGS.en for any missing key. */
+
+  ,cs: {
+    appName:'21denní Digitální Detox', tagline:'Vezmi kontrolu nad svým časem u obrazovky.',
+    yourName:'Tvoje jméno', namePh:'Zadej své jméno…', startDate:'Datum začátku',
+    intentionLabel:'Můj záměr pro těchto 21 dní', intentionPh:'Např. Více času s rodinou…',
+    startBtn:'Začít cestu detoxu →',
+    dayOf21: d=>`Den ${d} z 21`, streak:'Série', challenges:'Výzvy', avgMood:'Prům. nálada',
+    todayChallenge:'Dnešní výzva', logToday:'Zaznamenat →', todayCheckin:'Dnešní zápisník',
+    dayLog: d=>`Zápisník dne ${d}`, dailyLog:'Denní zápis',
+    screenTimeHrs:'Čas u obrazovky (hod)', sleepHrs:'Spánek (hod)',
+    conversation:'Byl/a jsi hodinu po probuzení a hodinu před spaním bez mobilu?',
+    creative:'Udělal/a jsi dnes něco kreativního nebo fyzického?',
+    moodToday:'Nálada dnes', moodLabels:['','Strašná','Špatná','Ujde','Dobrá','Skvělá'],
+    oneWin:'Jedno vítězství dnes', winPh:'Na co jsi dnes hrdý/á…',
+    prevDay:'← Předchozí', nextDay:'Další →',
+    myProgress:'Můj pokrok', journey21:'21denní cesta', tapDay:'Klepni na den pro úpravu',
+    screenJourney:'Čas u obrazovky (hod/den)', myIntention:'Můj záměr', noIntention:'Záměr nebyl nastaven.',
+    habitReplace:'Náhrada návyků', habitNote:'Místo sáhnutí po telefonu zkus jedno z těchto.',
+    myOwnRepl:'Moje vlastní náhrady', addHabitPh:'Přidat vlastní návyk…', add:'Přidat',
+    weeklyReflect:'Týdenní reflexe', week: n=>`Týden ${n}`,
+    reflectQs:['Na co jsi v tomto týdnu hrdý/á?','Jaký byl průměrný denní čas u obrazovky?','Jaký byl nejtěžší moment?','Co jsi zjistil/a bez telefonu?','Která výzva se ti líbila nejvíce?','Co budeš příští týden dělat jinak?'],
+    weekStats: n=>`STATISTIKY TÝDNE ${n}`, totalScreen:'Čas u obrazovky', challengesDoneOf7:'Splněné výzvy', avgMoodOf5:'Průměrná nálada',
+    writeThoughts:'Zapiš své myšlenky…', youDidIt:'🎉 Povedlo se!', finalReflect:'Den 21 — Závěrečná reflexe',
+    finalQs:[{key:'compared',q:'Jak se cítíš ve srovnání s Dnem 1?'},{key:'biggest',q:'Jaká NEJVĚTŠÍ změna nastala?'},{key:'keep',q:'Jaký návyk budeš udržovat i po Dni 21?'},{key:'friend',q:'Co bys řekl/a příteli začínajícímu výzvu?'}],
+    certHeader:'— Certifikát o Dokončení —', certBody:'Tímto se potvrzuje, že', certCompleted:'úspěšně dokončil/a',
+    certChallenge:'21DENNÍ VÝZVU DIGITÁLNÍHO DETOXU', certSub:'a udělal/a krok k zdravějšímu vztahu s technologiemi.',
+    printCert:'🖨 Tisknout certifikát', markDone:'Označit jako hotovo ✓', markedDone:'✓ Výzva splněna!',
+    quotes:{default:'"Téměř vše bude fungovat, pokud to na chvíli odpojíte, včetně vás." — Anne Lamott',1:'"Prvním krokem ke změně je uvědomění." — Nathaniel Branden',2:'"Jsme tím, co opakovaně děláme." — Aristoteles',3:'"Jsi dost. Máš dost. Děláš dost." — Brené Brown'},
+    settingsTitle:'Nastavení', settingsLang:'Jazyk', settingsDanger:'Nebezpečná zóna',
+    settingsNotif:'Denní připomínka',
+    settingsNotifEnable:'Zapnout denní připomínku', settingsNotifTimeLbl:'Čas připomínky',
+    settingsPermBtn:'Povolit oznámení', settingsPermGranted:'Oznámení povolena ✓',
+    settingsReset:'Resetovat veškerý pokrok', settingsClose:'Zavřít',
+    settingsAppearance:'Vzhled', themeAuto:'Auto', themeLight:'Světlý', themeDark:'Tmavý',
+    moodScreenSleep:'Nálada, obrazovka a spánek',
+    legendMood:'Nálada', legendScreen:'Obrazovka', legendSleep:'Spánek',
+    badgesTitle:'Milníky', badgeDay:n=>`Den ${n}`, badgeStreak:n=>`${n} dní v řadě`,
+    settingsNewChallenge:'Začít novou výzvu',
+    newChallengeConfirm:'Tímto se aktuální 21denní postup uloží do historie a začne nová výzva. Pokračovat?',
+    pastRunsTitle:'Předchozí běhy', noPastRuns:'Zatím žádné předchozí běhy.',
+    runCompletedOn:date=>`Dokončeno ${date}`,
+    downloadCertBtn:'⬇ Stáhnout jako obrázek',
+    editChallengeBtn:'✎ Upravit', editChallengeTitle:'Upravit výzvu',
+    editChallengePh:'Napiš vlastní výzvu pro tento den…', resetChallengeBtn:'Obnovit výchozí',
+    saveBtn:'Uložit', cancelBtn:'Zrušit',
+    notifIosNote:'📱 Na iPhonu appku nejdřív přidej na Plochu (Sdílet → Přidat na plochu) — jinak Safari notifikace neumožní.',
+    notifTitle:'Čas zapsat dnešní den! 📵', notifCta:'Otevři aplikaci a zaznamenej svůj den.',
+    day1:'Den 1', day21:'Den 21', certDone:'✓ Dokončeno',
+    navHome:'Domů', navToday:'Dnes', navProgress:'Pokrok',
+    navHabits:'Návyky', navReflect:'Reflexe', navFinish:'Závěr',
+    howItWorks:'Jak to funguje',
+    howItWorksBullets:[
+      ['📋','<strong>Sleduj denně</strong>','— zaznamenávej čas u obrazovky, náladu a návyky'],
+      ['🎯','<strong>Plň výzvy</strong>','— jeden úkol bez obrazovky každý den'],
+      ['💭','<strong>Reflektuj týdně</strong>','— všímej si vzorců, oslav úspěchy'],
+      ['🔄','<strong>Nahrazuj, neodstraňuj</strong>','— vyměň čas s telefonem za skutečný život'],
+      ['🎉','<strong>Oslav Den 21</strong>','— zasloužíš si to!']
+    ],
+    challengesList:[
+      'Hodinu po probuzení bez mobilu',
+      'Smazat sociální sítě na 24 hodin',
+      'Jedno jídlo zcela bez telefonu',
+      '30minutová procházka bez sluchátek a mobilu',
+      'Dnes nikomu nepíšeš první. Počkej.',
+      'Čti fyzickou knihu 30 minut',
+      'Telefon po 21:00 odložit',
+      'Vypnout VŠECHNA upozornění na celý den',
+      'Napsat 3 stránky rukou do zápisníku',
+      'Zavolat místo psaní zprávy',
+      '1 hodina koníčka – nulové obrazovky',
+      'Uvařit z paměti, bez YouTube',
+      'Telefon v jiném pokoji 3 hodiny',
+      'Celý rozhovor bez kontroly telefonu',
+      'Bez internetu do poledne',
+      '20 minut v kavárně bez telefonu',
+      'Ráno v tichu – bez hudby, bez podcastů',
+      'Kreslit nebo malovat 20 minut',
+      'Naplánovat týden perem a papírem',
+      'Celý večer 100 % offline',
+      'Napsat dopis svému budoucímu já'
+    ],
+    habitItems:{
+      'Read a book or magazine':'Číst knihu nebo časopis',
+      'Write in a journal':'Psát deník',
+      'Draw or doodle':'Kreslit nebo čmárat',
+      'Learn a new word':'Naučit se nové slovo',
+      'Do a puzzle':'Složit puzzle',
+      'Plan on paper':'Plánovat na papíře',
+      'Go for a walk (no headphones)':'Jít na procházku (bez sluchátek)',
+      'Stretch 10 minutes':'Protáhnout se 10 minut',
+      'Do 20 push-ups':'Udělat 20 kliků',
+      'Tidy one room':'Uklidit jeden pokoj',
+      'Cook something new':'Uvařit něco nového',
+      'Garden or be outside':'Zahradničit nebo být venku',
+      'Call a friend':'Zavolat příteli',
+      'Write a postcard':'Napsat pohlednici',
+      'Meet someone for coffee':'Sejít se na kávu',
+      'Play a board game':'Hrát společenskou hru',
+      'Screen-free dinner':'Večeře bez obrazovek',
+      'Volunteer locally':'Dobrovolničit lokálně',
+      'Meditate 5–10 minutes':'Meditovat 5–10 minut',
+      'Sit outside and breathe':'Sednout si venku a dýchat',
+      'Listen to music mindfully':'Vědomě poslouchat hudbu',
+      'Take a long bath':'Dát si dlouhou koupel',
+      'Breathing exercise':'Dechové cvičení',
+      'Watch the sky 5 min':'Pozorovat oblohu 5 minut'
+    },
+    habitCats:{'Mental & Creative':'Mentální a kreativní','Physical & Active':'Fyzické a aktivní','Social & Connecting':'Sociální','Calm & Restorative':'Klidné a obnovující'}
+  }
+
+  ,de: {
+    appName:'21-Tage Digitaldetox', tagline:'Übernimm wieder die Kontrolle über deine Bildschirmzeit.',
+    yourName:'Dein Name', namePh:'Name eingeben…', startDate:'Startdatum',
+    intentionLabel:'Meine Absicht für diese 21 Tage', intentionPh:'z.B. Mehr Zeit mit der Familie…',
+    startBtn:'Meine Detox-Reise starten →',
+    dayOf21: d=>`Tag ${d} von 21`, streak:'Serie', challenges:'Challenges', avgMood:'Ø Stimmung',
+    todayChallenge:'Heutige Challenge', logToday:'Heute eintragen →', todayCheckin:'Heutiger Check-in',
+    dayLog: d=>`Tag-${d}-Protokoll`, dailyLog:'Tagesprotokoll',
+    screenTimeHrs:'Bildschirmzeit (Std)', sleepHrs:'Schlaf (Std)',
+    conversation:'Warst du 1 Stunde nach dem Aufwachen und 1 Stunde vor dem Schlafen ohne Handy?',
+    creative:'Hast du heute etwas Kreatives oder Körperliches gemacht?',
+    moodToday:'Stimmung heute', moodLabels:['','Schrecklich','Schlecht','Ok','Gut','Super'],
+    oneWin:'Ein Erfolg heute', winPh:'Worauf bist du heute stolz…',
+    prevDay:'← Vorheriger', nextDay:'Nächster →',
+    myProgress:'Mein Fortschritt', journey21:'21-Tage-Reise', tapDay:'Tag antippen zum Bearbeiten',
+    screenJourney:'Bildschirmzeit (Std/Tag)', myIntention:'Meine Absicht', noIntention:'Noch keine Absicht gesetzt.',
+    habitReplace:'Gewohnheitsersatz', habitNote:'Statt zum Handy zu greifen, probiere eines davon.',
+    myOwnRepl:'Eigene Alternativen', addHabitPh:'Eigene Gewohnheit hinzufügen…', add:'Hinzufügen',
+    weeklyReflect:'Wöchentliche Reflexion', week: n=>`Woche ${n}`,
+    reflectQs:['Worauf bist du diese Woche stolz?','Wie war deine durchschnittliche Bildschirmzeit?','Was war der schwierigste Moment?','Was hast du ohne Handy entdeckt?','Welche Challenge hat dir am meisten Spaß gemacht?','Was wirst du nächste Woche anders machen?'],
+    weekStats: n=>`WOCHE-${n}-STATISTIK`, totalScreen:'Bildschirmzeit gesamt', challengesDoneOf7:'Challenges erledigt', avgMoodOf5:'Durchschnittsstimmung',
+    writeThoughts:'Gedanken aufschreiben…', youDidIt:'🎉 Du hast es geschafft!', finalReflect:'Tag 21 — Abschlussreflexion',
+    finalQs:[{key:'compared',q:'Wie fühlst du dich im Vergleich zu Tag 1?'},{key:'biggest',q:'Was ist die GRÖSSTE Veränderung, die du bemerkt hast?'},{key:'keep',q:'Welche Gewohnheit behältst du nach Tag 21 bei?'},{key:'friend',q:'Was würdest du einem Freund sagen, der beginnt?'}],
+    certHeader:'— Abschlusszertifikat —', certBody:'Hiermit wird bestätigt, dass', certCompleted:'erfolgreich absolviert hat:',
+    certChallenge:'21-TAGE-DIGITALDETOX-CHALLENGE', certSub:'und einen bedeutenden Schritt zu einem gesünderen Verhältnis zur Technologie gemacht hat.',
+    printCert:'🖨 Zertifikat drucken', markDone:'Als erledigt markieren ✓', markedDone:'✓ Challenge erledigt!',
+    quotes:{default:'"Fast alles funktioniert wieder, wenn man es kurz aussteckt, auch du." — Anne Lamott',1:'"Der erste Schritt zur Veränderung ist Bewusstsein." — Nathaniel Branden',2:'"Wir sind, was wir wiederholt tun." — Aristoteles',3:'"Du bist genug. Du hast genug. Du tust genug." — Brené Brown'},
+    settingsTitle:'Einstellungen', settingsLang:'Sprache', settingsDanger:'Gefahrenzone',
+    settingsNotif:'Tägliche Erinnerung',
+    settingsNotifEnable:'Tägliche Erinnerung aktivieren', settingsNotifTimeLbl:'Erinnerungszeit',
+    settingsPermBtn:'Benachrichtigungen erlauben', settingsPermGranted:'Benachrichtigungen erlaubt ✓',
+    settingsReset:'Gesamten Fortschritt zurücksetzen', settingsClose:'Schließen',
+    settingsAppearance:'Darstellung', themeAuto:'Auto', themeLight:'Hell', themeDark:'Dunkel',
+    moodScreenSleep:'Stimmung, Bildschirmzeit & Schlaf',
+    legendMood:'Stimmung', legendScreen:'Bildschirm', legendSleep:'Schlaf',
+    badgesTitle:'Meilensteine', badgeDay:n=>`Tag ${n}`, badgeStreak:n=>`${n}-Tage-Serie`,
+    settingsNewChallenge:'Neue Challenge starten',
+    newChallengeConfirm:'Dies archiviert deinen aktuellen 21-Tage-Fortschritt und startet eine neue Challenge. Fortfahren?',
+    pastRunsTitle:'Frühere Durchläufe', noPastRuns:'Noch keine früheren Durchläufe.',
+    runCompletedOn:date=>`Beendet am ${date}`,
+    downloadCertBtn:'⬇ Als Bild herunterladen',
+    editChallengeBtn:'✎ Anpassen', editChallengeTitle:'Challenge bearbeiten',
+    editChallengePh:'Schreibe deine eigene Challenge für diesen Tag…', resetChallengeBtn:'Zurücksetzen',
+    saveBtn:'Speichern', cancelBtn:'Abbrechen',
+    notifIosNote:'📱 Füge die App auf dem iPhone zuerst zum Home-Bildschirm hinzu (Teilen → Zum Home-Bildschirm) — sonst erlaubt Safari keine Benachrichtigungen.',
+    notifTitle:'Zeit, deinen Tag zu protokollieren! 📵', notifCta:'Öffne die App und trage deinen Tag ein.',
+    day1:'Tag 1', day21:'Tag 21', certDone:'✓ Abgeschlossen',
+    navHome:'Start', navToday:'Heute', navProgress:'Fortschritt',
+    navHabits:'Gewohnheiten', navReflect:'Reflexion', navFinish:'Abschluss',
+    howItWorks:'Wie es funktioniert',
+    howItWorksBullets:[
+      ['📋','<strong>Täglich tracken</strong>','— Bildschirmzeit, Stimmung & Gewohnheiten'],
+      ['🎯','<strong>Challenges meistern</strong>','— eine bildschirmfreie Aufgabe pro Tag'],
+      ['💭','<strong>Wöchentlich reflektieren</strong>','— Muster erkennen, Erfolge feiern'],
+      ['🔄','<strong>Ersetzen, nicht entfernen</strong>','— Handyzeit durch echtes Leben tauschen'],
+      ['🎉','<strong>Tag 21 feiern</strong>','— du hast es verdient!']
+    ],
+    challengesList:[
+      '1 Stunde nach dem Aufwachen kein Handy',
+      'Social-Media-Apps 24 Stunden löschen',
+      'Eine Mahlzeit komplett handyfrei',
+      '30 Min. Spaziergang – kein Kopfhörer, kein Handy',
+      'Heute niemanden zuerst schreiben. Warten.',
+      '30 Minuten ein gedrucktes Buch lesen',
+      'Kein Handy nach 21 Uhr',
+      'ALLE Benachrichtigungen für den Tag ausschalten',
+      '3 Seiten von Hand in ein Notizbuch schreiben',
+      'Jemanden anrufen statt schreiben',
+      '1 Stunde Hobby – null Bildschirme',
+      'Aus dem Kopf kochen, kein YouTube',
+      'Handy 3 Stunden in einem anderen Zimmer lassen',
+      'Ein Gespräch ohne Handy-Check führen',
+      'Kein Internet vor dem Mittag',
+      '20 Minuten im Café ohne Handy sitzen',
+      'Morgen in Stille – keine Musik, keine Podcasts',
+      '20 Minuten zeichnen oder malen',
+      'Die Woche nur mit Stift und Papier planen',
+      'Den ganzen Abend 100 % offline',
+      'Einen Brief an das zukünftige Ich schreiben'
+    ],
+    habitItems:{
+      'Read a book or magazine':'Ein Buch oder Magazin lesen',
+      'Write in a journal':'Tagebuch schreiben',
+      'Draw or doodle':'Zeichnen oder kritzeln',
+      'Learn a new word':'Ein neues Wort lernen',
+      'Do a puzzle':'Ein Puzzle lösen',
+      'Plan on paper':'Auf Papier planen',
+      'Go for a walk (no headphones)':'Spazieren gehen (ohne Kopfhörer)',
+      'Stretch 10 minutes':'10 Minuten dehnen',
+      'Do 20 push-ups':'20 Liegestütze machen',
+      'Tidy one room':'Ein Zimmer aufräumen',
+      'Cook something new':'Etwas Neues kochen',
+      'Garden or be outside':'Gärtnern oder draußen sein',
+      'Call a friend':'Einen Freund anrufen',
+      'Write a postcard':'Eine Postkarte schreiben',
+      'Meet someone for coffee':'Jemanden auf einen Kaffee treffen',
+      'Play a board game':'Ein Brettspiel spielen',
+      'Screen-free dinner':'Abendessen ohne Bildschirm',
+      'Volunteer locally':'Lokal ehrenamtlich tätig sein',
+      'Meditate 5–10 minutes':'5–10 Minuten meditieren',
+      'Sit outside and breathe':'Draußen sitzen und atmen',
+      'Listen to music mindfully':'Bewusst Musik hören',
+      'Take a long bath':'Ein langes Bad nehmen',
+      'Breathing exercise':'Atemübung',
+      'Watch the sky 5 min':'5 Min. den Himmel beobachten'
+    },
+    habitCats:{'Mental & Creative':'Mental & Kreativ','Physical & Active':'Körperlich & Aktiv','Social & Connecting':'Sozial','Calm & Restorative':'Ruhig & Erholsam'}
+  }
+
+  ,es: {
+    appName:'Detox Digital 21 Días', tagline:'Recupera el control de tu tiempo en pantalla.',
+    yourName:'Tu nombre', namePh:'Escribe tu nombre…', startDate:'Fecha de inicio',
+    intentionLabel:'Mi intención para estos 21 días', intentionPh:'Ej. Pasar más tiempo con la familia…',
+    startBtn:'Comenzar mi viaje de detox →',
+    dayOf21: d=>`Día ${d} de 21`, streak:'Racha', challenges:'Retos', avgMood:'Estado medio',
+    todayChallenge:'Reto de hoy', logToday:'Registrar hoy →', todayCheckin:'Check-in de hoy',
+    dayLog: d=>`Registro del día ${d}`, dailyLog:'Registro diario',
+    screenTimeHrs:'Tiempo de pantalla (horas)', sleepHrs:'Sueño (horas)',
+    conversation:'¿Estuviste 1 hora sin teléfono después de despertar y 1 hora antes de dormir?',
+    creative:'¿Hiciste hoy algo creativo o físico?',
+    moodToday:'Estado de ánimo hoy', moodLabels:['','Terrible','Mal','Regular','Bien','Genial'],
+    oneWin:'Un logro hoy', winPh:'¿De qué estás orgulloso/a hoy?…',
+    prevDay:'← Anterior', nextDay:'Siguiente →',
+    myProgress:'Mi progreso', journey21:'Viaje de 21 días', tapDay:'Toca un día para editarlo',
+    screenJourney:'Tiempo de pantalla (horas/día)', myIntention:'Mi intención', noIntention:'Intención no establecida.',
+    habitReplace:'Reemplazo de hábitos', habitNote:'En lugar de coger el teléfono, prueba uno de estos.',
+    myOwnRepl:'Mis propios reemplazos', addHabitPh:'Añadir hábito propio…', add:'Añadir',
+    weeklyReflect:'Reflexiones semanales', week: n=>`Semana ${n}`,
+    reflectQs:['¿De qué estás orgulloso/a esta semana?','¿Cuál fue tu tiempo de pantalla diario medio?','¿Cuál fue el momento más difícil?','¿Qué descubriste sin el teléfono?','¿Qué reto disfrutaste más?','¿Qué harás diferente la próxima semana?'],
+    weekStats: n=>`ESTADÍSTICAS SEMANA ${n}`, totalScreen:'Tiempo de pantalla total', challengesDoneOf7:'Retos completados', avgMoodOf5:'Estado medio',
+    writeThoughts:'Escribe tus pensamientos…', youDidIt:'🎉 ¡Lo lograste!', finalReflect:'Día 21 — Reflexión final',
+    finalQs:[{key:'compared',q:'¿Cómo te sientes en comparación con el Día 1?'},{key:'biggest',q:'¿Cuál es el MAYOR cambio que notaste en ti?'},{key:'keep',q:'¿Qué hábito mantendrás después del Día 21?'},{key:'friend',q:'¿Qué le dirías a un amigo que empieza el reto?'}],
+    certHeader:'— Certificado de Finalización —', certBody:'Por la presente se certifica que', certCompleted:'ha completado exitosamente',
+    certChallenge:'EL RETO DE DETOX DIGITAL DE 21 DÍAS', certSub:'y ha dado un paso significativo hacia una relación más saludable con la tecnología.',
+    printCert:'🖨 Imprimir certificado', markDone:'Marcar como hecho ✓', markedDone:'✓ ¡Reto completado!',
+    quotes:{default:'"Casi todo vuelve a funcionar si lo desconectas unos minutos, incluido tú." — Anne Lamott',1:'"El primer paso hacia el cambio es la conciencia." — Nathaniel Branden',2:'"Somos lo que hacemos repetidamente." — Aristóteles',3:'"Eres suficiente. Tienes suficiente. Haces suficiente." — Brené Brown'},
+    settingsTitle:'Ajustes', settingsLang:'Idioma', settingsDanger:'Zona de peligro',
+    settingsNotif:'Recordatorio diario',
+    settingsNotifEnable:'Activar recordatorio diario', settingsNotifTimeLbl:'Hora del recordatorio',
+    settingsPermBtn:'Permitir notificaciones', settingsPermGranted:'Notificaciones permitidas ✓',
+    settingsReset:'Restablecer todo el progreso', settingsClose:'Cerrar',
+    settingsAppearance:'Apariencia', themeAuto:'Auto', themeLight:'Claro', themeDark:'Oscuro',
+    moodScreenSleep:'Ánimo, pantalla y sueño',
+    legendMood:'Ánimo', legendScreen:'Pantalla', legendSleep:'Sueño',
+    badgesTitle:'Hitos', badgeDay:n=>`Día ${n}`, badgeStreak:n=>`Racha de ${n} días`,
+    settingsNewChallenge:'Comenzar un nuevo reto',
+    newChallengeConfirm:'Esto archivará tu progreso actual de 21 días y comenzará un nuevo reto. ¿Continuar?',
+    pastRunsTitle:'Retos anteriores', noPastRuns:'Aún no hay retos anteriores.',
+    runCompletedOn:date=>`Terminado el ${date}`,
+    downloadCertBtn:'⬇ Descargar como imagen',
+    editChallengeBtn:'✎ Personalizar', editChallengeTitle:'Editar reto',
+    editChallengePh:'Escribe tu propio reto para este día…', resetChallengeBtn:'Restablecer',
+    saveBtn:'Guardar', cancelBtn:'Cancelar',
+    notifIosNote:'📱 En iPhone, añade primero esta app a la pantalla de inicio (Compartir → Añadir a inicio) — si no, Safari no permite notificaciones.',
+    notifTitle:'¡Hora de registrar tu día! 📵', notifCta:'Abre la app y registra tu día.',
+    day1:'Día 1', day21:'Día 21', certDone:'✓ Completado',
+    navHome:'Inicio', navToday:'Hoy', navProgress:'Progreso',
+    navHabits:'Hábitos', navReflect:'Reflexión', navFinish:'Final',
+    howItWorks:'Cómo funciona',
+    howItWorksBullets:[
+      ['📋','<strong>Registra diariamente</strong>','— tiempo de pantalla, estado y hábitos'],
+      ['🎯','<strong>Haz los retos</strong>','— una tarea sin pantalla por día'],
+      ['💭','<strong>Reflexiona semanalmente</strong>','— nota patrones, celebra logros'],
+      ['🔄','<strong>Reemplaza, no elimines</strong>','— cambia el móvil por vida real'],
+      ['🎉','<strong>Celebra el Día 21</strong>','— ¡te lo mereces!']
+    ],
+    challengesList:[
+      'Sin teléfono 1 hora después de despertar',
+      'Eliminar apps de redes sociales 24 horas',
+      'Una comida completamente sin teléfono',
+      'Caminata 30 min — sin auriculares, sin teléfono',
+      'Hoy no escribas a nadie primero. Espera.',
+      'Leer un libro físico 30 minutos',
+      'Sin teléfono después de las 21:00',
+      'Desactivar TODAS las notificaciones del día',
+      'Escribir 3 páginas a mano en un cuaderno',
+      'Llamar a alguien en vez de escribir',
+      '1 hora de hobby — cero pantallas',
+      'Cocinar de memoria, sin YouTube',
+      'Dejar el teléfono en otra habitación 3 horas',
+      'Mantener una conversación sin mirar el teléfono',
+      'Sin internet antes del mediodía',
+      'Sentarse en una cafetería 20 min sin teléfono',
+      'Mañana en silencio — sin música, sin podcasts',
+      'Dibujar o pintar 20 minutos',
+      'Planear la semana solo con papel y bolígrafo',
+      'Pasar toda la tarde 100 % sin conexión',
+      'Escribir una carta a tu yo futuro'
+    ],
+    habitItems:{
+      'Read a book or magazine':'Leer un libro o revista',
+      'Write in a journal':'Escribir en un diario',
+      'Draw or doodle':'Dibujar o garabatear',
+      'Learn a new word':'Aprender una nueva palabra',
+      'Do a puzzle':'Hacer un rompecabezas',
+      'Plan on paper':'Planear en papel',
+      'Go for a walk (no headphones)':'Dar un paseo (sin auriculares)',
+      'Stretch 10 minutes':'Estirarse 10 minutos',
+      'Do 20 push-ups':'Hacer 20 flexiones',
+      'Tidy one room':'Ordenar una habitación',
+      'Cook something new':'Cocinar algo nuevo',
+      'Garden or be outside':'Jardinear o estar al aire libre',
+      'Call a friend':'Llamar a un amigo',
+      'Write a postcard':'Escribir una postal',
+      'Meet someone for coffee':'Quedar para un café',
+      'Play a board game':'Jugar un juego de mesa',
+      'Screen-free dinner':'Cena sin pantallas',
+      'Volunteer locally':'Hacer voluntariado local',
+      'Meditate 5–10 minutes':'Meditar 5–10 minutos',
+      'Sit outside and breathe':'Sentarse fuera y respirar',
+      'Listen to music mindfully':'Escuchar música conscientemente',
+      'Take a long bath':'Darse un baño largo',
+      'Breathing exercise':'Ejercicio de respiración',
+      'Watch the sky 5 min':'Observar el cielo 5 min'
+    },
+    habitCats:{'Mental & Creative':'Mental y Creativo','Physical & Active':'Físico y Activo','Social & Connecting':'Social','Calm & Restorative':'Calma y Restauración'}
+  }
+
+  ,fr: {
+    appName:'Détox Numérique 21 Jours', tagline:'Reprends le contrôle de ton temps d\'écran.',
+    yourName:'Ton prénom', namePh:'Entre ton prénom…', startDate:'Date de début',
+    intentionLabel:'Mon intention pour ces 21 jours', intentionPh:'Ex. Passer plus de temps en famille…',
+    startBtn:'Commencer mon voyage détox →',
+    dayOf21: d=>`Jour ${d} sur 21`, streak:'Série', challenges:'Défis', avgMood:'Humeur moy.',
+    todayChallenge:"Défi d'aujourd'hui", logToday:"Enregistrer →", todayCheckin:"Check-in du jour",
+    dayLog: d=>`Journal Jour ${d}`, dailyLog:'Journal quotidien',
+    screenTimeHrs:"Temps d'écran (heures)", sleepHrs:'Sommeil (heures)',
+    conversation:"Es-tu resté(e) 1h sans téléphone après le réveil et 1h avant de dormir?",
+    creative:"As-tu fait quelque chose de créatif ou de physique aujourd'hui?",
+    moodToday:"Humeur aujourd'hui", moodLabels:['','Terrible','Mauvais','Correct','Bien','Super'],
+    oneWin:"Une victoire aujourd'hui", winPh:"De quoi es-tu fier/fière aujourd'hui…",
+    prevDay:'← Précédent', nextDay:'Suivant →',
+    myProgress:'Ma progression', journey21:'Voyage de 21 jours', tapDay:'Touche un jour pour le modifier',
+    screenJourney:"Temps d'écran (h/jour)", myIntention:'Mon intention', noIntention:'Intention non définie.',
+    habitReplace:'Remplacement d\'habitudes', habitNote:'Au lieu de prendre ton téléphone, essaie l\'un de ceux-ci.',
+    myOwnRepl:'Mes propres remplacements', addHabitPh:'Ajouter une habitude…', add:'Ajouter',
+    weeklyReflect:'Réflexions hebdomadaires', week: n=>`Semaine ${n}`,
+    reflectQs:["De quoi es-tu fier/fière cette semaine?",'Quel était ton temps d\'écran quotidien moyen?','Quel était le moment le plus difficile?','Qu\'as-tu découvert sans ton téléphone?','Quel défi as-tu le plus apprécié?','Que feras-tu différemment la semaine prochaine?'],
+    weekStats: n=>`STATS SEMAINE ${n}`, totalScreen:"Temps d'écran total", challengesDoneOf7:'Défis complétés', avgMoodOf5:'Humeur moyenne',
+    writeThoughts:'Écris tes pensées…', youDidIt:'🎉 Tu l\'as fait!', finalReflect:'Jour 21 — Réflexion finale',
+    finalQs:[{key:'compared',q:'Comment te sens-tu par rapport au Jour 1?'},{key:'biggest',q:'Quel est le PLUS GRAND changement que tu as remarqué?'},{key:'keep',q:'Quelle habitude vas-tu garder après le Jour 21?'},{key:'friend',q:'Que dirais-tu à un ami qui commence ce défi?'}],
+    certHeader:'— Certificat de Réussite —', certBody:'Ceci certifie que', certCompleted:'a complété avec succès',
+    certChallenge:'LE DÉFI DÉTOX NUMÉRIQUE DE 21 JOURS', certSub:'et a fait un pas important vers une relation plus saine avec la technologie.',
+    printCert:'🖨 Imprimer le certificat', markDone:'Marquer comme fait ✓', markedDone:'✓ Défi accompli!',
+    quotes:{default:'"Presque tout fonctionne à nouveau si on le débranche quelques minutes, y compris toi." — Anne Lamott',1:'"Le premier pas vers le changement est la prise de conscience." — Nathaniel Branden',2:'"Nous sommes ce que nous faisons de façon répétée." — Aristote',3:'"Tu es suffisant(e). Tu as assez. Tu fais assez." — Brené Brown'},
+    settingsTitle:'Paramètres', settingsLang:'Langue', settingsDanger:'Zone de danger',
+    settingsNotif:'Rappel quotidien',
+    settingsNotifEnable:'Activer le rappel quotidien', settingsNotifTimeLbl:'Heure du rappel',
+    settingsPermBtn:'Autoriser les notifications', settingsPermGranted:'Notifications autorisées ✓',
+    settingsReset:'Réinitialiser toute la progression', settingsClose:'Fermer',
+    settingsAppearance:'Apparence', themeAuto:'Auto', themeLight:'Clair', themeDark:'Sombre',
+    moodScreenSleep:"Humeur, écran & sommeil",
+    legendMood:'Humeur', legendScreen:'Écran', legendSleep:'Sommeil',
+    badgesTitle:'Étapes clés', badgeDay:n=>`Jour ${n}`, badgeStreak:n=>`Série de ${n} jours`,
+    settingsNewChallenge:'Commencer un nouveau défi',
+    newChallengeConfirm:'Cela archivera ta progression actuelle de 21 jours et démarrera un nouveau défi. Continuer?',
+    pastRunsTitle:'Défis précédents', noPastRuns:'Aucun défi précédent pour le moment.',
+    runCompletedOn:date=>`Terminé le ${date}`,
+    downloadCertBtn:'⬇ Télécharger en image',
+    editChallengeBtn:'✎ Personnaliser', editChallengeTitle:'Modifier le défi',
+    editChallengePh:'Écris ton propre défi pour ce jour…', resetChallengeBtn:'Réinitialiser',
+    saveBtn:'Enregistrer', cancelBtn:'Annuler',
+    notifIosNote:"📱 Sur iPhone, ajoute d'abord l'app à l'écran d'accueil (Partager → Sur l'écran d'accueil) — sinon Safari ne permet pas les notifications.",
+    notifTitle:'Il est temps d\'enregistrer ta journée! 📵', notifCta:'Ouvre l\'app et enregistre ta journée.',
+    day1:'Jour 1', day21:'Jour 21', certDone:'✓ Complété',
+    navHome:'Accueil', navToday:'Aujourd\'hui', navProgress:'Progrès',
+    navHabits:'Habitudes', navReflect:'Réflexion', navFinish:'Fin',
+    howItWorks:'Comment ça marche',
+    howItWorksBullets:[
+      ['📋','<strong>Suis quotidiennement</strong>','— temps d\'écran, humeur & habitudes'],
+      ['🎯','<strong>Relève les défis</strong>','— une tâche sans écran par jour'],
+      ['💭','<strong>Réfléchis chaque semaine</strong>','— repère les schémas, célèbre les victoires'],
+      ['🔄','<strong>Remplace, ne supprime pas</strong>','— échange le téléphone contre la vraie vie'],
+      ['🎉','<strong>Célèbre le Jour 21</strong>','— tu le mérites!']
+    ],
+    challengesList:[
+      'Sans téléphone 1h après le réveil',
+      'Supprimer les apps de réseaux sociaux 24h',
+      'Un repas complètement sans téléphone',
+      'Marche 30 min — sans écouteurs, sans téléphone',
+      "Aujourd'hui, n'écris à personne en premier. Attends.",
+      'Lire un livre papier 30 minutes',
+      'Pas de téléphone après 21h',
+      'Désactiver TOUTES les notifications de la journée',
+      'Écrire 3 pages à la main dans un carnet',
+      "Appeler quelqu'un au lieu d'envoyer un message",
+      '1 heure de loisir — zéro écran',
+      'Cuisiner de mémoire, sans YouTube',
+      'Laisser le téléphone dans une autre pièce 3 heures',
+      'Avoir une conversation complète sans regarder son téléphone',
+      "Pas d'internet avant midi",
+      '20 minutes dans un café sans téléphone',
+      'Matin en silence — sans musique, sans podcasts',
+      'Dessiner ou peindre 20 minutes',
+      'Planifier la semaine uniquement avec stylo et papier',
+      'Passer toute la soirée 100 % hors ligne',
+      'Écrire une lettre à son futur soi'
+    ],
+    habitItems:{
+      'Read a book or magazine':'Lire un livre ou un magazine',
+      'Write in a journal':'Écrire dans un journal',
+      'Draw or doodle':'Dessiner ou gribouiller',
+      'Learn a new word':'Apprendre un nouveau mot',
+      'Do a puzzle':'Faire un puzzle',
+      'Plan on paper':'Planifier sur papier',
+      'Go for a walk (no headphones)':'Se promener (sans écouteurs)',
+      'Stretch 10 minutes':'S\'étirer 10 minutes',
+      'Do 20 push-ups':'Faire 20 pompes',
+      'Tidy one room':'Ranger une pièce',
+      'Cook something new':'Cuisiner quelque chose de nouveau',
+      'Garden or be outside':'Jardiner ou être dehors',
+      'Call a friend':'Appeler un ami',
+      'Write a postcard':'Écrire une carte postale',
+      'Meet someone for coffee':'Retrouver quelqu\'un pour un café',
+      'Play a board game':'Jouer à un jeu de société',
+      'Screen-free dinner':'Dîner sans écran',
+      'Volunteer locally':'Faire du bénévolat localement',
+      'Meditate 5–10 minutes':'Méditer 5–10 minutes',
+      'Sit outside and breathe':'S\'asseoir dehors et respirer',
+      'Listen to music mindfully':'Écouter de la musique en pleine conscience',
+      'Take a long bath':'Prendre un long bain',
+      'Breathing exercise':'Exercice de respiration',
+      'Watch the sky 5 min':'Observer le ciel 5 min'
+    },
+    habitCats:{'Mental & Creative':'Créatif & Mental','Physical & Active':'Physique & Actif','Social & Connecting':'Social','Calm & Restorative':'Calme & Ressourçant'}
+  }
+
+  ,ru: {
+    appName:'21-Дневный Цифровой Детокс', tagline:'Верни контроль над временем у экрана.',
+    yourName:'Твоё имя', namePh:'Введи своё имя…', startDate:'Дата начала',
+    intentionLabel:'Моё намерение на эти 21 день', intentionPh:'Напр. Больше времени с семьёй…',
+    startBtn:'Начать путешествие детокса →',
+    dayOf21: d=>`День ${d} из 21`, streak:'Серия', challenges:'Задания', avgMood:'Ср. настроение',
+    todayChallenge:'Задание на сегодня', logToday:'Записать →', todayCheckin:'Чек-ин дня',
+    dayLog: d=>`Журнал Дня ${d}`, dailyLog:'Дневник дня',
+    screenTimeHrs:'Время у экрана (ч)', sleepHrs:'Сон (ч)',
+    conversation:'Был(а) ли ты без телефона 1 час после пробуждения и 1 час перед сном?',
+    creative:'Делал(а) ли ты сегодня что-то творческое или физическое?',
+    moodToday:'Настроение сегодня', moodLabels:['','Ужасно','Плохо','Нормально','Хорошо','Отлично'],
+    oneWin:'Одна победа сегодня', winPh:'Чем ты сегодня гордишься…',
+    prevDay:'← Назад', nextDay:'Вперёд →',
+    myProgress:'Мой прогресс', journey21:'21-дневное путешествие', tapDay:'Нажми на день для редактирования',
+    screenJourney:'Время у экрана (ч/день)', myIntention:'Моё намерение', noIntention:'Намерение не задано.',
+    habitReplace:'Замена привычек', habitNote:'Вместо того чтобы тянуться к телефону, попробуй одно из этих.',
+    myOwnRepl:'Мои собственные замены', addHabitPh:'Добавить свою привычку…', add:'Добавить',
+    weeklyReflect:'Еженедельные размышления', week: n=>`Неделя ${n}`,
+    reflectQs:['Чем ты гордишься на этой неделе?','Каким было твоё среднее суточное время у экрана?','Какой был самый трудный момент?','Что ты обнаружил(а) без телефона?','Какое задание понравилось больше всего?','Что ты будешь делать иначе на следующей неделе?'],
+    weekStats: n=>`СТАТИСТИКА НЕДЕЛИ ${n}`, totalScreen:'Общее время у экрана', challengesDoneOf7:'Заданий выполнено', avgMoodOf5:'Среднее настроение',
+    writeThoughts:'Запиши свои мысли…', youDidIt:'🎉 Ты сделал(а) это!', finalReflect:'День 21 — Финальные размышления',
+    finalQs:[{key:'compared',q:'Как ты себя чувствуешь по сравнению с Днём 1?'},{key:'biggest',q:'Какое САМОЕ БОЛЬШОЕ изменение ты заметил(а)?'},{key:'keep',q:'Какую привычку ты сохранишь после Дня 21?'},{key:'friend',q:'Что бы ты сказал(а) другу, начинающему этот вызов?'}],
+    certHeader:'— Сертификат о завершении —', certBody:'Настоящим подтверждается, что', certCompleted:'успешно завершил(а)',
+    certChallenge:'21-ДНЕВНЫЙ ВЫЗОВ ЦИФРОВОГО ДЕТОКСА', certSub:'и сделал(а) значимый шаг к более здоровым отношениям с технологиями.',
+    printCert:'🖨 Распечатать сертификат', markDone:'Отметить как выполнено ✓', markedDone:'✓ Задание выполнено!',
+    quotes:{default:'"Почти всё снова заработает, если отключить это на несколько минут, включая тебя." — Энн Ламотт',1:'"Первый шаг к изменению — осознанность." — Натаниэль Бранден',2:'"Мы то, что мы делаем повторно." — Аристотель',3:'"Ты достаточен. У тебя достаточно. Ты делаешь достаточно." — Брене Браун'},
+    settingsTitle:'Настройки', settingsLang:'Язык', settingsDanger:'Опасная зона',
+    settingsNotif:'Ежедневное напоминание',
+    settingsNotifEnable:'Включить ежедневное напоминание', settingsNotifTimeLbl:'Время напоминания',
+    settingsPermBtn:'Разрешить уведомления', settingsPermGranted:'Уведомления разрешены ✓',
+    settingsReset:'Сбросить весь прогресс', settingsClose:'Закрыть',
+    settingsAppearance:'Оформление', themeAuto:'Авто', themeLight:'Светлая', themeDark:'Тёмная',
+    moodScreenSleep:'Настроение, экран и сон',
+    legendMood:'Настроение', legendScreen:'Экран', legendSleep:'Сон',
+    badgesTitle:'Вехи', badgeDay:n=>`День ${n}`, badgeStreak:n=>`${n} дней подряд`,
+    settingsNewChallenge:'Начать новый вызов',
+    newChallengeConfirm:'Это сохранит текущий 21-дневный прогресс в историю и начнёт новый вызов. Продолжить?',
+    pastRunsTitle:'Прошлые попытки', noPastRuns:'Пока нет прошлых попыток.',
+    runCompletedOn:date=>`Завершено ${date}`,
+    downloadCertBtn:'⬇ Скачать как изображение',
+    editChallengeBtn:'✎ Изменить', editChallengeTitle:'Изменить задание',
+    editChallengePh:'Напиши своё задание на этот день…', resetChallengeBtn:'Сбросить по умолчанию',
+    saveBtn:'Сохранить', cancelBtn:'Отмена',
+    notifIosNote:'📱 На iPhone сначала добавь приложение на экран «Домой» (Поделиться → На экран «Домой») — иначе Safari не разрешит уведомления.',
+    notifTitle:'Время записать свой день! 📵', notifCta:'Открой приложение и запиши свой день.',
+    day1:'День 1', day21:'День 21', certDone:'✓ Завершено',
+    navHome:'Главная', navToday:'Сегодня', navProgress:'Прогресс',
+    navHabits:'Привычки', navReflect:'Размышления', navFinish:'Финал',
+    howItWorks:'Как это работает',
+    howItWorksBullets:[
+      ['📋','<strong>Отслеживай ежедневно</strong>','— время у экрана, настроение и привычки'],
+      ['🎯','<strong>Выполняй задания</strong>','— одна задача без экрана в день'],
+      ['💭','<strong>Размышляй еженедельно</strong>','— замечай паттерны, празднуй победы'],
+      ['🔄','<strong>Заменяй, не убирай</strong>','— меняй время с телефоном на реальную жизнь'],
+      ['🎉','<strong>Отпразднуй День 21</strong>','— ты это заслужил(а)!']
+    ],
+    challengesList:[
+      'Без телефона 1 час после пробуждения',
+      'Удалить приложения соцсетей на 24 часа',
+      'Один приём пищи без телефона',
+      'Прогулка 30 мин — без наушников и телефона',
+      'Сегодня не пиши первым(ой). Жди.',
+      'Читать бумажную книгу 30 минут',
+      'Убрать телефон после 21:00',
+      'Отключить ВСЕ уведомления на день',
+      'Написать 3 страницы от руки в блокноте',
+      'Позвонить вместо переписки',
+      '1 час хобби — ноль экранов',
+      'Приготовить еду по памяти, без YouTube',
+      'Оставить телефон в другой комнате на 3 часа',
+      'Провести весь разговор без проверки телефона',
+      'Без интернета до полудня',
+      '20 минут в кафе без телефона',
+      'Утро в тишине — без музыки, без подкастов',
+      'Рисовать или красить 20 минут',
+      'Спланировать неделю только ручкой и бумагой',
+      'Весь вечер 100% оффлайн',
+      'Написать письмо своему будущему я'
+    ],
+    habitItems:{
+      'Read a book or magazine':'Читать книгу или журнал',
+      'Write in a journal':'Писать в дневник',
+      'Draw or doodle':'Рисовать или делать наброски',
+      'Learn a new word':'Выучить новое слово',
+      'Do a puzzle':'Собрать пазл',
+      'Plan on paper':'Планировать на бумаге',
+      'Go for a walk (no headphones)':'Прогуляться (без наушников)',
+      'Stretch 10 minutes':'Растянуться 10 минут',
+      'Do 20 push-ups':'Сделать 20 отжиманий',
+      'Tidy one room':'Убрать одну комнату',
+      'Cook something new':'Приготовить что-то новое',
+      'Garden or be outside':'Работать в саду или быть на улице',
+      'Call a friend':'Позвонить другу',
+      'Write a postcard':'Написать открытку',
+      'Meet someone for coffee':'Встретиться за кофе',
+      'Play a board game':'Поиграть в настольную игру',
+      'Screen-free dinner':'Ужин без экранов',
+      'Volunteer locally':'Волонтёрство в районе',
+      'Meditate 5–10 minutes':'Медитировать 5–10 минут',
+      'Sit outside and breathe':'Сидеть на улице и дышать',
+      'Listen to music mindfully':'Осознанно слушать музыку',
+      'Take a long bath':'Принять долгую ванну',
+      'Breathing exercise':'Дыхательное упражнение',
+      'Watch the sky 5 min':'Смотреть на небо 5 минут'
+    },
+    habitCats:{'Mental & Creative':'Умственное и творческое','Physical & Active':'Физическое и активное','Social & Connecting':'Социальное','Calm & Restorative':'Спокойное и восстанавливающее'}
+  }
+
+  ,pl: {
+    appName:'21-Dniowy Cyfrowy Detoks', tagline:'Odzyskaj kontrolę nad czasem przy ekranie.',
+    yourName:'Twoje imię', namePh:'Wpisz swoje imię…', startDate:'Data rozpoczęcia',
+    intentionLabel:'Mój zamiar na te 21 dni', intentionPh:'Np. Więcej czasu z rodziną…',
+    startBtn:'Rozpocznij moją podróż detoksu →',
+    dayOf21: d=>`Dzień ${d} z 21`, streak:'Seria', challenges:'Wyzwania', avgMood:'Śr. nastrój',
+    todayChallenge:'Wyzwanie na dziś', logToday:'Zapisz dziś →', todayCheckin:'Check-in dnia',
+    dayLog: d=>`Dziennik Dnia ${d}`, dailyLog:'Dziennik dnia',
+    screenTimeHrs:'Czas przy ekranie (godz)', sleepHrs:'Sen (godz)',
+    conversation:'Czy byłeś/aś bez telefonu przez 1 godzinę po przebudzeniu i 1 godzinę przed snem?',
+    creative:'Czy zrobiłeś/aś dziś coś kreatywnego lub fizycznego?',
+    moodToday:'Nastrój dziś', moodLabels:['','Okropny','Zły','Taki sobie','Dobry','Świetny'],
+    oneWin:'Jeden sukces dziś', winPh:'Z czego jesteś dziś dumny/a…',
+    prevDay:'← Poprzedni', nextDay:'Następny →',
+    myProgress:'Mój postęp', journey21:'Podróż 21 dni', tapDay:'Dotknij dzień, aby edytować',
+    screenJourney:'Czas przy ekranie (godz/dzień)', myIntention:'Mój zamiar', noIntention:'Zamiar nie został ustawiony.',
+    habitReplace:'Zamiana nawyków', habitNote:'Zamiast sięgać po telefon, wypróbuj jedno z tych.',
+    myOwnRepl:'Moje własne zamiany', addHabitPh:'Dodaj własny nawyk…', add:'Dodaj',
+    weeklyReflect:'Cotygodniowe refleksje', week: n=>`Tydzień ${n}`,
+    reflectQs:['Z czego jesteś dumny/a w tym tygodniu?','Jaki był Twój średni dzienny czas przy ekranie?','Jaki był najtrudniejszy moment?','Co odkryłeś/aś bez telefonu?','Które wyzwanie podobało Ci się najbardziej?','Co zrobisz inaczej w następnym tygodniu?'],
+    weekStats: n=>`STATYSTYKI TYGODNIA ${n}`, totalScreen:'Łączny czas przy ekranie', challengesDoneOf7:'Ukończone wyzwania', avgMoodOf5:'Średni nastrój',
+    writeThoughts:'Zapisz swoje myśli…', youDidIt:'🎉 Udało Ci się!', finalReflect:'Dzień 21 — Ostateczna refleksja',
+    finalQs:[{key:'compared',q:'Jak się czujesz w porównaniu z Dniem 1?'},{key:'biggest',q:'Jaka jest NAJWIĘKSZA zmiana, którą zauważyłeś/aś?'},{key:'keep',q:'Jaki nawyk utrzymasz po Dniu 21?'},{key:'friend',q:'Co powiedziałbyś/powiedziałabyś przyjacielowi zaczynającemu wyzwanie?'}],
+    certHeader:'— Certyfikat Ukończenia —', certBody:'Niniejszym poświadcza się, że', certCompleted:'pomyślnie ukończył/a',
+    certChallenge:'21-DNIOWE WYZWANIE CYFROWEGO DETOKSU', certSub:'i zrobił/a znaczący krok w kierunku zdrowszej relacji z technologią.',
+    printCert:'🖨 Drukuj certyfikat', markDone:'Oznacz jako gotowe ✓', markedDone:'✓ Wyzwanie ukończone!',
+    quotes:{default:'"Prawie wszystko znowu zadziała, jeśli odłączysz to na kilka minut, włącznie z Tobą." — Anne Lamott',1:'"Pierwszym krokiem do zmiany jest świadomość." — Nathaniel Branden',2:'"Jesteśmy tym, co robimy wielokrotnie." — Arystoteles',3:'"Jesteś wystarczający/a. Masz wystarczająco. Robisz wystarczająco." — Brené Brown'},
+    settingsTitle:'Ustawienia', settingsLang:'Język', settingsDanger:'Strefa niebezpieczna',
+    settingsNotif:'Codzienne przypomnienie',
+    settingsNotifEnable:'Włącz codzienne przypomnienie', settingsNotifTimeLbl:'Czas przypomnienia',
+    settingsPermBtn:'Zezwól na powiadomienia', settingsPermGranted:'Powiadomienia dozwolone ✓',
+    settingsReset:'Zresetuj cały postęp', settingsClose:'Zamknij',
+    settingsAppearance:'Wygląd', themeAuto:'Auto', themeLight:'Jasny', themeDark:'Ciemny',
+    moodScreenSleep:'Nastrój, ekran i sen',
+    legendMood:'Nastrój', legendScreen:'Ekran', legendSleep:'Sen',
+    badgesTitle:'Kamienie milowe', badgeDay:n=>`Dzień ${n}`, badgeStreak:n=>`Seria ${n} dni`,
+    settingsNewChallenge:'Rozpocznij nowe wyzwanie',
+    newChallengeConfirm:'To zarchiwizuje Twój obecny 21-dniowy postęp i rozpocznie nowe wyzwanie. Kontynuować?',
+    pastRunsTitle:'Poprzednie podejścia', noPastRuns:'Brak wcześniejszych podejść.',
+    runCompletedOn:date=>`Ukończono ${date}`,
+    downloadCertBtn:'⬇ Pobierz jako obraz',
+    editChallengeBtn:'✎ Dostosuj', editChallengeTitle:'Edytuj wyzwanie',
+    editChallengePh:'Napisz własne wyzwanie na ten dzień…', resetChallengeBtn:'Przywróć domyślne',
+    saveBtn:'Zapisz', cancelBtn:'Anuluj',
+    notifIosNote:'📱 Na iPhonie najpierw dodaj aplikację do ekranu głównego (Udostępnij → Dodaj do ekranu głównego) — inaczej Safari nie pozwoli na powiadomienia.',
+    notifTitle:'Czas zapisać swój dzień! 📵', notifCta:'Otwórz aplikację i zapisz swój dzień.',
+    day1:'Dzień 1', day21:'Dzień 21', certDone:'✓ Ukończono',
+    navHome:'Główna', navToday:'Dziś', navProgress:'Postęp',
+    navHabits:'Nawyki', navReflect:'Refleksja', navFinish:'Finał',
+    howItWorks:'Jak to działa',
+    howItWorksBullets:[
+      ['📋','<strong>Śledź codziennie</strong>','— czas ekranowy, nastrój i nawyki'],
+      ['🎯','<strong>Wykonuj wyzwania</strong>','— jedno zadanie bez ekranu dziennie'],
+      ['💭','<strong>Reflektuj co tydzień</strong>','— dostrzegaj wzorce, świętuj sukcesy'],
+      ['🔄','<strong>Zastępuj, nie usuwaj</strong>','— zamień czas z telefonem na prawdziwe życie'],
+      ['🎉','<strong>Świętuj Dzień 21</strong>','— zasługujesz na to!']
+    ],
+    challengesList:[
+      'Bez telefonu przez 1 godzinę po przebudzeniu',
+      'Usuń aplikacje mediów społecznościowych na 24 godziny',
+      'Jeden posiłek całkowicie bez telefonu',
+      '30 min spaceru — bez słuchawek, bez telefonu',
+      'Dziś do nikogo nie pisz pierwszy(a). Czekaj.',
+      'Czytaj papierową książkę 30 minut',
+      'Bez telefonu po godzinie 21:00',
+      'Wyłącz WSZYSTKIE powiadomienia na cały dzień',
+      'Napisz 3 strony ręcznie w notatniku',
+      'Zadzwoń do kogoś zamiast pisać',
+      '1 godzina hobby — zero ekranów',
+      'Gotuj z pamięci, bez YouTube',
+      'Zostaw telefon w innym pokoju na 3 godziny',
+      'Przeprowadź całą rozmowę bez sprawdzania telefonu',
+      'Bez internetu do południa',
+      '20 minut w kawiarni bez telefonu',
+      'Rano w ciszy — bez muzyki, bez podcastów',
+      'Rysuj lub maluj przez 20 minut',
+      'Zaplanuj tydzień tylko długopisem i papierem',
+      'Cały wieczór 100% offline',
+      'Napisz list do swojego przyszłego ja'
+    ],
+    habitItems:{
+      'Read a book or magazine':'Czytaj książkę lub magazyn',
+      'Write in a journal':'Pisz w dzienniku',
+      'Draw or doodle':'Rysuj lub bazgraj',
+      'Learn a new word':'Naucz się nowego słowa',
+      'Do a puzzle':'Ułóż puzzle',
+      'Plan on paper':'Planuj na papierze',
+      'Go for a walk (no headphones)':'Idź na spacer (bez słuchawek)',
+      'Stretch 10 minutes':'Rozciągaj się 10 minut',
+      'Do 20 push-ups':'Zrób 20 pompek',
+      'Tidy one room':'Posprzątaj jeden pokój',
+      'Cook something new':'Ugotuj coś nowego',
+      'Garden or be outside':'Pracuj w ogrodzie lub wyjdź na zewnątrz',
+      'Call a friend':'Zadzwoń do przyjaciela',
+      'Write a postcard':'Napisz pocztówkę',
+      'Meet someone for coffee':'Spotkaj się na kawę',
+      'Play a board game':'Zagraj w grę planszową',
+      'Screen-free dinner':'Kolacja bez ekranów',
+      'Volunteer locally':'Wolontariat w okolicy',
+      'Meditate 5–10 minutes':'Medytuj 5–10 minut',
+      'Sit outside and breathe':'Usiądź na zewnątrz i oddychaj',
+      'Listen to music mindfully':'Słuchaj muzyki uważnie',
+      'Take a long bath':'Weź długą kąpiel',
+      'Breathing exercise':'Ćwiczenie oddechowe',
+      'Watch the sky 5 min':'Obserwuj niebo przez 5 min'
+    },
+    habitCats:{'Mental & Creative':'Umysłowe i kreatywne','Physical & Active':'Fizyczne i aktywne','Social & Connecting':'Społeczne','Calm & Restorative':'Spokojne i odnawiające'}
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════
+   STATIC DATA
+   ═══════════════════════════════════════════════════════════ */
+const CHALLENGES = [
+  "No phone for the first hour after waking up",
+  "Delete social media apps for 24 hours",
+  "Have one meal completely phone-free",
+  "30-min walk — no headphones, no phone",
+  "Text nobody first today. Wait for others.",
+  "Read a physical book for 30 minutes",
+  "No phone after 9 PM",
+  "Turn off ALL notifications for the day",
+  "Write 3 pages by hand in a notebook",
+  "Call someone instead of texting them",
+  "1 hour doing a hobby — zero screens",
+  "Cook a meal from memory, no YouTube",
+  "Leave your phone in another room for 3 hours",
+  "Have a full conversation without checking your phone",
+  "No internet before noon",
+  "Sit in a café for 20 minutes without your phone",
+  "Morning in silence — no music, no podcasts",
+  "Draw, paint, or doodle for 20 minutes",
+  "Plan your week using only pen and paper",
+  "Spend the entire evening 100% offline",
+  "Write a letter to your future self"
+];
+
+const HABITS_DATA = {
+  'Mental & Creative':  ['Read a book or magazine','Write in a journal','Draw or doodle','Learn a new word','Do a puzzle','Plan on paper'],
+  'Physical & Active':  ['Go for a walk (no headphones)','Stretch 10 minutes','Do 20 push-ups','Tidy one room','Cook something new','Garden or be outside'],
+  'Social & Connecting':['Call a friend','Write a postcard','Meet someone for coffee','Play a board game','Screen-free dinner','Volunteer locally'],
+  'Calm & Restorative': ['Meditate 5–10 minutes','Sit outside and breathe','Listen to music mindfully','Take a long bath','Breathing exercise','Watch the sky 5 min']
+};
+
+/* ═══════════════════════════════════════════════════════════
+   STATE — persisted to localStorage
+   ═══════════════════════════════════════════════════════════ */
+const STORE_KEY = 'detox_v2';
+
+let S = {
+  lang:       'en',
+  name:       '',
+  startDate:  null,
+  intention:  '',
+  days:       {},
+  reflections:{},
+  habits:     [],
+  customHabits:[],
+  finalReflection: {},
+  notif: { enabled: false, time: '08:00', lastDate: '' },
+  theme:      'auto',
+  customChallenges: {},
+  history:    [],
+  celebratedFinish: false
+};
+
+function load() {
+  try { const r = localStorage.getItem(STORE_KEY); if (r) S = { ...S, ...JSON.parse(r) }; } catch(e){}
+}
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch(e){}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   i18n HELPER
+   ═══════════════════════════════════════════════════════════ */
+function t(key, ...args) {
+  let v = (STRINGS[S.lang] || STRINGS.en)[key];
+  if (v === undefined) return key;
+  return typeof v === 'function' ? v(...args) : v;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════ */
+function currentDay() {
+  if (!S.startDate) return 1;
+  const s = new Date(S.startDate); s.setHours(0,0,0,0);
+  const n = new Date();            n.setHours(0,0,0,0);
+  return Math.min(Math.max(1, Math.floor((n - s) / 86400000) + 1), 21);
+}
+
+function dayData(d) {
+  return S.days[d] || { screenTime: 0, sleep: 7, conversation: false, creative: false, mood: 0, challengeDone: false, win: '' };
+}
+
+function getChallenge(d) {
+  if (S.customChallenges && S.customChallenges[d]) return S.customChallenges[d];
+  const list = (STRINGS[S.lang] || STRINGS.en).challengesList;
+  return (list && list[d - 1]) || CHALLENGES[d - 1];
+}
+
+function weekStats(w) {
+  let totScreen = 0, done = 0, mSum = 0, mN = 0;
+  for (let d = (w-1)*7+1; d <= w*7; d++) {
+    const x = S.days[d]; if (!x) continue;
+    totScreen += parseFloat(x.screenTime || 0);
+    if (x.challengeDone) done++;
+    if (x.mood > 0) { mSum += x.mood; mN++; }
+  }
+  return { totScreen: totScreen.toFixed(1), done, avgMood: mN ? (mSum/mN).toFixed(1) : '—' };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CELEBRATE — thin wrapper around the canvas-confetti CDN lib
+   (see the <script> tag in <head>), tuned to the app's palette.
+   'small' fires on a daily challenge completion, 'big' on
+   finishing Day 21. If the library failed to load (offline on
+   first visit, CDN blocked) this quietly no-ops. Under
+   prefers-reduced-motion it skips the particles entirely and
+   plays a brief static glow pulse instead.
+   ═══════════════════════════════════════════════════════════ */
+function celebrate(size) {
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) {
+    document.body.classList.remove('celebrate-glow');
+    void document.body.offsetWidth;
+    document.body.classList.add('celebrate-glow');
+    setTimeout(() => document.body.classList.remove('celebrate-glow'), 1000);
+    return;
+  }
+  if (typeof confetti !== 'function') return; // CDN lib not available — fail silent
+
+  const palette = ['#B8C4E8', '#8A9DD1', '#F2F0FA', '#6D7FC4', '#DCE3F7'];
+  if (size === 'big') {
+    const end = Date.now() + 2200;
+    (function burst() {
+      confetti({ particleCount: 5, angle: 60,  spread: 60, origin: { x: 0, y: .7 }, colors: palette, disableForReducedMotion: true });
+      confetti({ particleCount: 5, angle: 120, spread: 60, origin: { x: 1, y: .7 }, colors: palette, disableForReducedMotion: true });
+      if (Date.now() < end) requestAnimationFrame(burst);
+    })();
+    confetti({ particleCount: 130, spread: 100, startVelocity: 42, origin: { y: .55 }, colors: palette, disableForReducedMotion: true });
+  } else {
+    confetti({ particleCount: 36, spread: 55, startVelocity: 28, origin: { y: .72 }, colors: palette, scalar: .9, disableForReducedMotion: true });
+  }
+}
+
+function overallStats() {
+  const cd = currentDay();
+  let challenges = 0, mSum = 0, mN = 0, streak = 0;
+  // streak: consecutive logged days ending today
+  for (let d = cd; d >= 1; d--) {
+    const x = S.days[d];
+    const logged = x && (x.challengeDone || x.mood > 0 || x.win || parseFloat(x.screenTime) > 0);
+    if (logged) streak++;
+    else if (d < cd) break;
+  }
+  for (let d = 1; d <= 21; d++) {
+    const x = S.days[d]; if (!x) continue;
+    if (x.challengeDone) challenges++;
+    if (x.mood > 0) { mSum += x.mood; mN++; }
+  }
+  return { streak, challenges, avgMood: mN ? (mSum/mN).toFixed(1) : '—' };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   APP CONTROLLER
+   ═══════════════════════════════════════════════════════════ */
+let viewDay = 1;
+let reflectWeek = 1;
+let _prevRingDay = null;
+
+/* ═══════════════════════════════════════════════════════════
+   COUNT-UP — animates a number-bearing element's textContent
+   from its previous value to a new one. Works on plain HTML
+   elements (uses a data-attribute to remember "from" across
+   renders) and on regenerated SVG <text> nodes (pass `from`
+   explicitly since those don't persist between renders).
+   Skips straight to the end value under prefers-reduced-motion.
+   ═══════════════════════════════════════════════════════════ */
+function animateCountUp(el, target, opts = {}) {
+  if (!el) return;
+  target = Math.round(target);
+  const duration = opts.duration || 700;
+  const from = opts.from != null ? Math.round(opts.from) : (parseInt(el.dataset.cuPrev, 10) || 0);
+  const setDone = () => { el.textContent = target; if (el.dataset) el.dataset.cuPrev = String(target); };
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || from === target) { setDone(); return; }
+  const t0 = performance.now();
+  (function tick(now) {
+    const p = Math.min((now - t0) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (target - from) * eased);
+    if (p < 1) requestAnimationFrame(tick); else setDone();
+  })(t0);
+}
+
+/* Small shared helper: runs `fn` inside a View Transition when the
+   browser supports it (and motion isn't reduced), else runs it plain.
+   Used for the lang-picker → onboarding → app handoff and for page
+   swaps in App.go(). */
+/* Makes a non-button element (day circles, habit rows) keyboard-operable:
+   focusable, correct ARIA role, and Enter/Space triggers the same
+   handler as a click. Skips elements that shouldn't be reachable by
+   tab (e.g. future/disabled day circles) — just don't call this on them. */
+function makeKeyActivatable(el, handler, role) {
+  el.tabIndex = 0;
+  el.setAttribute('role', role || 'button');
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      handler();
+    }
+  });
+}
+
+function withViewTransition(fn) {
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (document.startViewTransition && !reduced) document.startViewTransition(fn);
+  else fn();
+}
+
+/* Builds the (dark-mode-only, CSS-hidden in light mode) starfield once.
+   Randomized per star so the twinkle never looks synchronized; static
+   dots (no animation) automatically under prefers-reduced-motion via
+   the .star CSS rule. */
+function initStarfield() {
+  const field = document.getElementById('starfield');
+  if (!field || field.childElementCount) return;
+  const count = 15 + Math.floor(Math.random() * 11); // 15–25
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < count; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    const size = 0.5 + Math.random() * 1.5;
+    const min  = .15 + Math.random() * .15;
+    const max  = Math.min(.5, min + .15 + Math.random() * .15);
+    const dur  = 3 + Math.random() * 3;
+    star.style.left   = (Math.random() * 100).toFixed(2) + '%';
+    star.style.top    = (Math.random() * 100).toFixed(2) + '%';
+    star.style.width  = size.toFixed(2) + 'px';
+    star.style.height = size.toFixed(2) + 'px';
+    star.style.opacity = max.toFixed(2);
+    star.style.setProperty('--star-min', min.toFixed(2));
+    star.style.setProperty('--star-max', max.toFixed(2));
+    star.style.animationDuration = dur.toFixed(2) + 's';
+    star.style.animationDelay = (-(Math.random() * dur)).toFixed(2) + 's';
+    frag.appendChild(star);
+  }
+  field.appendChild(frag);
+}
+
+const App = {
+
+  /* ── Bootstrap ─────────────────────────────────── */
+  init() {
+    load();
+    this._applyTheme();
+    document.getElementById('ob-date').value = new Date().toISOString().slice(0,10);
+    // If no language has been chosen yet, show the language picker
+    if (!localStorage.getItem('detox_lang_chosen')) {
+      document.getElementById('lang-picker').style.display = 'flex';
+      document.getElementById('onboarding').style.display = 'none';
+      return;
+    }
+    document.getElementById('lang-picker').style.display = 'none';
+    if (S.name && S.startDate) {
+      this._hideOnboarding();
+      viewDay = currentDay();
+      this._render();
+      this._checkMissedNotif();
+      this._scheduleNotif();
+    }
+  },
+
+  /* Called from the language picker screen */
+  pickLang(code) {
+    S.lang = code;
+    save();
+    localStorage.setItem('detox_lang_chosen', '1');
+    this._applyLangToOnboarding();
+    withViewTransition(() => {
+      document.getElementById('lang-picker').style.display = 'none';
+      if (S.name && S.startDate) {
+        this._hideOnboarding();
+        viewDay = currentDay();
+        this._render();
+        this._checkMissedNotif();
+        this._scheduleNotif();
+      } else {
+        document.getElementById('onboarding').style.display = 'flex';
+      }
+    });
+  },
+
+  _applyLangToOnboarding() {
+    const el = id => document.getElementById(id);
+    el('ob-name').placeholder    = t('namePh');
+    el('ob-intention').placeholder = t('intentionPh');
+    el('ob-start-btn') && (el('ob-start-btn').textContent = t('startBtn'));
+  },
+
+  _applyLang() {
+    const ml = (STRINGS[S.lang] || STRINGS.en).moodLabels;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      const mMatch = key.match(/^mood(\d)$/);
+      if (mMatch) { el.textContent = ml[+mMatch[1]] || ''; return; }
+      const val = t(key);
+      if (typeof val === 'string') el.textContent = val;
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      const val = t(el.dataset.i18nPh);
+      if (typeof val === 'string') el.placeholder = val;
+    });
+    document.querySelectorAll('.tab-btn[data-week]').forEach(btn => {
+      btn.textContent = t('week', +btn.dataset.week);
+    });
+  },
+
+  start() {
+    const name       = document.getElementById('ob-name').value.trim();
+    const startDate  = document.getElementById('ob-date').value;
+    const intention  = document.getElementById('ob-intention').value.trim();
+    if (!name)      { document.getElementById('ob-name').focus(); return; }
+    if (!startDate) { document.getElementById('ob-date').focus(); return; }
+    S.name = name; S.startDate = startDate; S.intention = intention;
+    save();
+    withViewTransition(() => {
+      this._hideOnboarding();
+      viewDay = currentDay();
+      this._render();
+    });
+    this._checkMissedNotif();
+    this._scheduleNotif();
+  },
+
+  _hideOnboarding() {
+    document.getElementById('onboarding').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+  },
+
+  setLang(code) {
+    if (STRINGS[code]) { S.lang = code; save(); this._render(); }
+  },
+
+  /* ── Settings modal ─────────────────────────────── */
+  openSettings() {
+    const m = document.getElementById('settings-modal');
+    m.style.display = 'flex';
+    document.getElementById('notif-toggle').checked = !!(S.notif && S.notif.enabled);
+    document.getElementById('notif-time').value = (S.notif && S.notif.time) || '08:00';
+    document.querySelectorAll('.lang-chip[data-lc]').forEach(c =>
+      c.classList.toggle('active', c.dataset.lc === S.lang)
+    );
+    document.querySelectorAll('[data-theme-opt]').forEach(c =>
+      c.classList.toggle('active', c.dataset.themeOpt === (S.theme || 'auto'))
+    );
+    this._applyLang();
+    this._updateNotifPermBtn();
+    this._renderPastRuns();
+    this._iosNotifNote();
+  },
+
+  closeSettings() {
+    document.getElementById('settings-modal').style.display = 'none';
+  },
+
+  closeSettingsBg(e) {
+    if (e.target === document.getElementById('settings-modal')) this.closeSettings();
+  },
+
+  changeLang(code) {
+    S.lang = code; save();
+    document.querySelectorAll('.lang-chip[data-lc]').forEach(c =>
+      c.classList.toggle('active', c.dataset.lc === code)
+    );
+    this._render(); // _render calls _applyLang at the end
+    this._updateNotifPermBtn();
+  },
+
+  /* ── Theme ──────────────────────────────────────── */
+  setTheme(mode) {
+    S.theme = mode; save();
+    this._applyTheme();
+    document.querySelectorAll('[data-theme-opt]').forEach(c =>
+      c.classList.toggle('active', c.dataset.themeOpt === mode)
+    );
+  },
+
+  _applyTheme() {
+    const mode = S.theme || 'auto';
+    document.documentElement.setAttribute('data-theme', mode === 'auto' ? '' : mode);
+    this._syncNativeStatusBar();
+  },
+
+  /* Keeps the native status bar (Capacitor only — no-op on web) in sync
+     with whichever theme is actually showing, so it never looks like a
+     mismatched light/dark seam above the app. */
+  _syncNativeStatusBar() {
+    if (!this._isNative() || !window.Capacitor.Plugins.StatusBar) return;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+      (document.documentElement.getAttribute('data-theme') !== 'light' &&
+       window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const { StatusBar } = window.Capacitor.Plugins;
+    StatusBar.setStyle({ style: isDark ? 'DARK' : 'LIGHT' }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: isDark ? '#0D1220' : '#F4F6F1' }).catch(() => {});
+  },
+
+  saveNotifSettings() {
+    if (!S.notif) S.notif = {};
+    S.notif.enabled = document.getElementById('notif-toggle').checked;
+    S.notif.time    = document.getElementById('notif-time').value || '08:00';
+    save();
+    this._scheduleNotif();
+  },
+
+  /* True when running as a packaged native app (Capacitor) rather than
+     a web/PWA tab — gates the notification paths below between the
+     reliable native LocalNotifications plugin and the old best-effort
+     Web Notification API fallback. */
+  _isNative() {
+    return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  },
+
+  _updateNotifPermBtn() {
+    const btn = document.getElementById('notif-perm-btn');
+    const status = document.getElementById('notif-status');
+
+    if (this._isNative()) {
+      const { LocalNotifications } = window.Capacitor.Plugins;
+      LocalNotifications.checkPermissions().then(res => {
+        if (res.display === 'granted') {
+          btn.style.display = 'none';
+          status.textContent = t('settingsPermGranted') || 'Notifications allowed ✓';
+          status.style.color = 'var(--primary-mid)';
+        } else if (res.display === 'denied') {
+          btn.style.display = 'none';
+          status.textContent = 'Notifications blocked — enable in system settings.';
+          status.style.color = '#d9534f';
+        } else {
+          btn.style.display = 'block';
+          btn.textContent = t('settingsPermBtn') || 'Allow notifications';
+          status.textContent = '';
+          status.style.color = '';
+        }
+      });
+      return;
+    }
+
+    if (!('Notification' in window)) {
+      btn.style.display = 'none';
+      status.textContent = 'Notifications not supported in this browser.';
+      return;
+    }
+    if (Notification.permission === 'granted') {
+      btn.style.display = 'none';
+      status.textContent = t('settingsPermGranted') || 'Notifications allowed ✓';
+      status.style.color = 'var(--primary-mid)';
+    } else if (Notification.permission === 'denied') {
+      btn.style.display = 'none';
+      status.textContent = 'Notifications blocked — enable in browser settings.';
+      status.style.color = '#d9534f';
+    } else {
+      btn.style.display = 'block';
+      btn.textContent = t('settingsPermBtn') || 'Allow notifications';
+      status.textContent = '';
+    }
+  },
+
+  requestNotifPermission() {
+    if (this._isNative()) {
+      const { LocalNotifications } = window.Capacitor.Plugins;
+      LocalNotifications.requestPermissions().then(res => {
+        this._updateNotifPermBtn();
+        if (res.display === 'granted') this._scheduleNotif();
+      });
+      return;
+    }
+    if (!('Notification' in window)) return;
+    Notification.requestPermission().then(() => {
+      this._updateNotifPermBtn();
+      this._scheduleNotif();
+    });
+  },
+
+  /* Best-effort heads-up: iOS Safari only supports notifications for
+     PWAs added to the Home Screen (iOS 16.4+), never in a regular tab.
+     Irrelevant (and hidden) once packaged as a native app. */
+  _iosNotifNote() {
+    const note = document.getElementById('notif-ios-note');
+    if (!note) return;
+    if (this._isNative()) { note.textContent = ''; return; }
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isStandalone = window.navigator.standalone === true ||
+      window.matchMedia('(display-mode: standalone)').matches;
+    note.textContent = (isIOS && !isStandalone) ? t('notifIosNote') : '';
+  },
+
+  resetProgress() {
+    const msg = t('settingsReset') || 'Reset all progress';
+    if (!confirm(msg + '?')) return;
+    const lang = S.lang, theme = S.theme;
+    S = {
+      lang, theme, name:'', startDate:null, intention:'', days:{}, reflections:{},
+      habits:[], customHabits:[], finalReflection:{},
+      notif:{ enabled:false, time:'08:00', lastDate:'' },
+      customChallenges:{}, history:[], celebratedFinish:false
+    };
+    save();
+    this.closeSettings();
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('onboarding').style.display = 'flex';
+    this._applyLangToOnboarding();
+  },
+
+  /* ── Restart challenge / run history ─────────────── */
+  startNewChallenge() {
+    if (!confirm(t('newChallengeConfirm'))) return;
+    const cd = currentDay();
+    const st = overallStats();
+    if (!S.history) S.history = [];
+    S.history.unshift({
+      startDate: S.startDate,
+      finishedAt: new Date().toISOString(),
+      daysReached: cd,
+      challenges: st.challenges,
+      avgMood: st.avgMood
+    });
+    S.days = {};
+    S.reflections = {};
+    S.finalReflection = {};
+    S.customChallenges = {};
+    S.celebratedFinish = false;
+    S.startDate = new Date().toISOString().slice(0, 10);
+    save();
+    viewDay = 1;
+    this.closeSettings();
+    this._render();
+  },
+
+  _renderPastRuns() {
+    const wrap = document.getElementById('past-runs-list');
+    if (!wrap) return;
+    if (!S.history || S.history.length === 0) {
+      wrap.innerHTML = `<p class="note">${t('noPastRuns')}</p>`;
+      return;
+    }
+    wrap.innerHTML = S.history.map(r => {
+      const date = new Date(r.finishedAt).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+      return `
+        <div class="toggle-row" style="border-bottom:1px solid var(--border);">
+          <div class="tl">
+            <strong>${t('runCompletedOn', date)}</strong><br>
+            <span class="note">${t('badgeDay', r.daysReached)} · ${r.challenges}/21 ${t('challenges')} · ${t('avgMood')}: ${r.avgMood}</span>
+          </div>
+        </div>`;
+    }).join('');
+  },
+
+  /* ── Notifications ──────────────────────────────── */
+  _scheduleNotif() {
+    if (!S.notif || !S.notif.enabled) return;
+    const [h, m] = (S.notif.time || '08:00').split(':').map(Number);
+    const cd    = currentDay();
+    const title = t('notifTitle') || 'Time to log your day! 📵';
+    const body  = (t('notifCta')  || 'Open the app and log your day.') +
+                  '\n' + getChallenge(cd);
+
+    // Native app (Capacitor) — reliable, fires even if the app isn't running.
+    if (this._isNative()) {
+      const { LocalNotifications } = window.Capacitor.Plugins;
+      LocalNotifications.cancel({ notifications: [{ id: 1 }] }).catch(() => {});
+      LocalNotifications.schedule({
+        notifications: [{
+          id: 1,
+          title,
+          body,
+          schedule: { on: { hour: h, minute: m }, allowWhileIdle: true }
+        }]
+      }).catch(err => console.warn('LocalNotifications schedule failed:', err));
+      return;
+    }
+
+    // Web/PWA fallback — best-effort, only reliable while the app is
+    // open or was recently closed (see _checkMissedNotif catch-up below).
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    if (!('serviceWorker' in navigator)) return;
+
+    const now    = new Date();
+    const target = new Date();
+    target.setHours(h, m, 0, 0);
+    if (target <= now) target.setDate(target.getDate() + 1);
+    const delay = target - now;
+
+    navigator.serviceWorker.ready.then(reg => {
+      reg.active && reg.active.postMessage({ type:'SCHEDULE_NOTIF', delay, title, body });
+    });
+
+    // Also register periodic background sync where supported
+    navigator.serviceWorker.ready.then(reg => {
+      if ('periodicSync' in reg) {
+        reg.periodicSync.register('daily-reminder', { minInterval: 60 * 60 * 1000 }).catch(()=>{});
+      }
+    });
+  },
+
+  _checkMissedNotif() {
+    // Native scheduling is self-sufficient — nothing to catch up on.
+    if (this._isNative()) return;
+
+    if (!S.notif || !S.notif.enabled) return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (S.notif.lastDate === today) return;   // already sent today
+    const [h, m] = (S.notif.time || '08:00').split(':').map(Number);
+    const now = new Date();
+    const target = new Date(); target.setHours(h, m, 0, 0);
+    if (now < target) return;                 // not time yet today
+    // Time has passed and we haven't notified — show now
+    const cd    = currentDay();
+    const title = t('notifTitle') || 'Time to log your day! 📵';
+    const body  = t('notifCta')   || 'Open the app and log your day.';
+    navigator.serviceWorker.ready.then(reg => {
+      reg.showNotification(title, {
+        body, icon: './icons/icon-192.png', badge: './icons/icon-192.png',
+        tag: 'daily-reminder', data: { url: './' }
+      });
+    });
+    S.notif.lastDate = today;
+    save();
+  },
+
+  /* ── Navigation ─────────────────────────────────── */
+  go(name) {
+    const swap = () => {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('page-' + name).classList.add('active');
+      document.getElementById('nav-' + name).classList.add('active');
+      if (name === 'today')    this._renderToday();
+      if (name === 'progress') this._renderProgress();
+      if (name === 'habits')   this._renderHabits();
+      if (name === 'reflect')  this._renderReflect();
+      if (name === 'finish') {
+        this._renderFinish();
+        if (currentDay() >= 21 && !S.celebratedFinish) {
+          S.celebratedFinish = true; save();
+          celebrate('big');
+        }
+      }
+      this._updateNavIndicator();
+    };
+    withViewTransition(swap);
+  },
+
+  /* Glides the pill behind whichever .nav-btn is active — reads
+     real layout boxes so it lines up regardless of label width. */
+  _updateNavIndicator() {
+    const active = document.querySelector('.nav-btn.active');
+    const ind = document.getElementById('nav-indicator');
+    if (!active || !ind) return;
+    ind.style.width = active.offsetWidth + 'px';
+    ind.style.transform = `translateX(${active.offsetLeft - 6}px)`;
+  },
+
+  /* ── Full render ────────────────────────────────── */
+  _render() {
+    this._renderHeader();
+    this._renderHome();
+    this._renderToday();
+    this._renderProgress();
+    this._renderHabits();
+    this._renderReflect();
+    this._renderFinish();
+    this._applyLang();
+    this._updateNavIndicator();
+  },
+
+  /* ── Header ─────────────────────────────────────── */
+  _renderHeader() {
+    const cd = currentDay();
+    document.getElementById('hdr-sub').textContent =
+      `${t('dayOf21', cd)} · ${S.name}`;
+  },
+
+  /* ── Home ───────────────────────────────────────── */
+  _renderHome() {
+    const cd = currentDay();
+    const pct = Math.round(cd / 21 * 100);
+    const r = 30;
+    const circ = 2 * Math.PI * r;
+    const targetOffset = circ * (1 - Math.min(pct, 100) / 100);
+    document.getElementById('home-banner').innerHTML = `
+      <div class="banner-ring">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <defs>
+            <linearGradient id="ringGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="var(--primary)"/>
+              <stop offset="100%" stop-color="var(--gold)"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="40" cy="40" r="${r}" stroke-width="6"/>
+          <circle class="ring-fill" id="ring-fill-circle" cx="40" cy="40" r="${r}" stroke-width="6"
+            stroke-dasharray="${circ.toFixed(1)}"
+            stroke-dashoffset="${circ.toFixed(1)}"
+            transform="rotate(-90 40 40)"/>
+          <text class="ring-text-val" id="ring-text-val" x="40" y="37" text-anchor="middle" dominant-baseline="middle">${_prevRingDay ?? 0}</text>
+          <text class="ring-text-sub" x="40" y="53" text-anchor="middle">of 21</text>
+        </svg>
+      </div>
+      <div class="banner-info">
+        <div class="bi-title">📵 ${t('dayOf21', cd)}</div>
+        <div class="bi-sub">${pct}% of your journey complete</div>
+      </div>`;
+
+    // Animate the ring fill + day number in on every Home render.
+    const fillEl = document.getElementById('ring-fill-circle');
+    const valEl  = document.getElementById('ring-text-val');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (fillEl) fillEl.style.strokeDashoffset = targetOffset.toFixed(1);
+    }));
+    animateCountUp(valEl, cd, { from: _prevRingDay ?? cd, duration: 900 });
+    _prevRingDay = cd;
+
+    const st = overallStats();
+    animateCountUp(document.getElementById('s-streak'), st.streak);
+    animateCountUp(document.getElementById('s-done'), st.challenges);
+    document.getElementById('s-mood').textContent   = st.avgMood;
+
+    // Milestone badges
+    const badges = [
+      { earned: cd >= 7,  label: t('badgeDay', 7),  icon: '🥉' },
+      { earned: cd >= 14, label: t('badgeDay', 14), icon: '🥈' },
+      { earned: cd >= 21, label: t('badgeDay', 21), icon: '🏆' },
+      { earned: st.streak >= 5,  label: t('badgeStreak', 5),  icon: '🔥' },
+      { earned: st.streak >= 10, label: t('badgeStreak', 10), icon: '⚡' }
+    ];
+    const anyEarned = badges.some(b => b.earned);
+    const badgesEl = document.getElementById('home-badges');
+    if (anyEarned) {
+      badgesEl.innerHTML = `
+        <div class="card">
+          <h2>${t('badgesTitle')}</h2>
+          <div class="badge-row">
+            ${badges.map(b => `
+              <div class="badge-chip${b.earned ? ' earned' : ''}">
+                <span class="badge-icon">${b.icon}</span>
+                <span class="badge-label">${b.label}</span>
+              </div>`).join('')}
+          </div>
+        </div>`;
+      badgesEl.style.display = 'block';
+    } else {
+      badgesEl.innerHTML = ''; badgesEl.style.display = 'none';
+    }
+
+    document.getElementById('home-challenge').innerHTML = `
+      <h2>${t('todayChallenge')}</h2>
+      <p class="note mt8" style="line-height:1.55;">${getChallenge(cd)}</p>
+      <button class="btn sm mt12" onclick="App.go('today')">${t('logToday')}</button>
+    `;
+
+    const wk = Math.ceil(cd / 7);
+    const qKey = wk <= 3 ? wk : 'default';
+    document.getElementById('home-quote').textContent = (STRINGS[S.lang]||STRINGS.en).quotes[qKey] || (STRINGS[S.lang]||STRINGS.en).quotes.default;
+
+    const howto = document.getElementById('home-howto');
+    howto.style.display = cd <= 3 ? 'block' : 'none';
+    const bullets = (STRINGS[S.lang]||STRINGS.en).howItWorksBullets;
+    howto.innerHTML = `
+      <h2>${t('howItWorks')}</h2>
+      <div class="note" style="line-height:1.7;">
+        ${bullets.map(([em,b,rest]) => `<div>${em} ${b} ${rest}</div>`).join('')}
+      </div>`;
+  },
+
+  /* ── Today ──────────────────────────────────────── */
+  _renderToday() {
+    const cd   = currentDay();
+    const d    = viewDay;
+    const data = dayData(d);
+    const isToday = d === cd;
+
+    document.getElementById('ch-badge').textContent = t('dayOf21', d).split(' ').slice(0,2).join(' ');
+    document.getElementById('ch-text').textContent  = getChallenge(d);
+    document.getElementById('ch-reset-btn').style.display = (S.customChallenges && S.customChallenges[d]) ? '' : 'none';
+    this.closeChallengeEdit();
+
+    const btn = document.getElementById('ch-btn');
+    if (data.challengeDone) {
+      btn.textContent = t('markedDone');
+      btn.style.background = '#4a8c2a';
+    } else {
+      btn.textContent = t('markDone');
+      btn.style.background = '';
+    }
+
+    document.getElementById('fld-screen').value  = data.screenTime ?? 0;
+    document.getElementById('fld-sleep').value   = data.sleep ?? 7;
+    document.getElementById('fld-conversation').checked = !!data.conversation;
+    document.getElementById('fld-creative').checked     = !!data.creative;
+    document.getElementById('fld-win').value      = data.win || '';
+
+    document.querySelectorAll('.mood-btn').forEach(b =>
+      b.classList.toggle('sel', +b.dataset.m === data.mood)
+    );
+
+    document.getElementById('today-title').textContent =
+      isToday ? t('todayCheckin') : t('dayLog', d);
+
+    document.getElementById('view-info').textContent =
+      isToday ? '' : t('viewingDay', d, d < cd);
+
+    document.getElementById('btn-prev-day').disabled = d <= 1;
+    document.getElementById('btn-prev-day').style.opacity = d <= 1 ? .4 : 1;
+    document.getElementById('btn-next-day').disabled = d >= cd;
+    document.getElementById('btn-next-day').style.opacity = d >= cd ? .4 : 1;
+  },
+
+  navDay(delta) {
+    // Can't skip ahead of today — the next day only unlocks after real midnight.
+    const maxDay = currentDay();
+    viewDay = Math.min(Math.max(1, viewDay + delta), maxDay);
+    this._renderToday();
+  },
+
+  /* ── Custom challenge per day ────────────────────── */
+  openChallengeEdit() {
+    document.getElementById('ch-edit-input').value = getChallenge(viewDay);
+    document.getElementById('ch-edit-panel').style.display = 'block';
+    document.getElementById('ch-actions').style.display = 'none';
+  },
+
+  closeChallengeEdit() {
+    const panel = document.getElementById('ch-edit-panel');
+    if (panel) panel.style.display = 'none';
+    const actions = document.getElementById('ch-actions');
+    if (actions) actions.style.display = 'flex';
+  },
+
+  saveCustomChallenge() {
+    const val = document.getElementById('ch-edit-input').value.trim();
+    if (!val) return;
+    if (!S.customChallenges) S.customChallenges = {};
+    S.customChallenges[viewDay] = val;
+    save();
+    this._renderToday();
+    this._renderHome();
+  },
+
+  resetCustomChallenge() {
+    if (S.customChallenges) delete S.customChallenges[viewDay];
+    save();
+    this._renderToday();
+    this._renderHome();
+  },
+
+  toggleChallenge() {
+    if (!S.days[viewDay]) S.days[viewDay] = dayData(viewDay);
+    S.days[viewDay].challengeDone = !S.days[viewDay].challengeDone;
+    const justCompleted = S.days[viewDay].challengeDone;
+    save(); this._renderToday(); this._renderHome(); this._renderProgress();
+    if (justCompleted) celebrate(viewDay >= 21 ? 'big' : 'small');
+  },
+
+  setMood(val) {
+    if (!S.days[viewDay]) S.days[viewDay] = dayData(viewDay);
+    S.days[viewDay].mood = val;
+    document.querySelectorAll('.mood-btn').forEach(b => {
+      const isSel = +b.dataset.m === val;
+      b.classList.toggle('sel', isSel);
+      if (isSel) {
+        b.classList.remove('pop');
+        void b.offsetWidth; // restart the animation even on repeated taps
+        b.classList.add('pop');
+      }
+    });
+    save(); this._renderHome();
+  },
+
+  step(id, delta) {
+    const el = document.getElementById(id);
+    el.value = Math.min(Math.max(0, Math.round((parseFloat(el.value||0) + delta) * 2) / 2), 24);
+    this.saveDay();
+  },
+
+  saveDay() {
+    if (!S.days[viewDay]) S.days[viewDay] = {};
+    S.days[viewDay].screenTime    = parseFloat(document.getElementById('fld-screen').value) || 0;
+    S.days[viewDay].sleep         = parseFloat(document.getElementById('fld-sleep').value)  || 0;
+    S.days[viewDay].conversation  = document.getElementById('fld-conversation').checked;
+    S.days[viewDay].creative      = document.getElementById('fld-creative').checked;
+    S.days[viewDay].win           = document.getElementById('fld-win').value;
+    if (!S.days[viewDay].mood)          S.days[viewDay].mood = 0;
+    if (!S.days[viewDay].challengeDone) S.days[viewDay].challengeDone = false;
+    save(); this._renderHome(); this._renderProgress();
+  },
+
+  /* ── Progress ───────────────────────────────────── */
+  _renderProgress() {
+    const cd = currentDay();
+
+    // Circles — laid out as a gentle wave (see --wave) with a
+    // glowing line connecting completed days beneath them.
+    const container = document.getElementById('circles');
+    container.innerHTML = '';
+    for (let d = 1; d <= 21; d++) {
+      const x = S.days[d];
+      const done   = x && (x.challengeDone || x.mood > 0 || x.win || parseFloat(x.screenTime) > 0);
+      const isToday= d === cd;
+      const future = d > cd;
+      const wEnd   = d % 7 === 0;
+      const wave   = Math.sin(((d - 1) % 7) / 6 * Math.PI) * -7;
+
+      const el = document.createElement('div');
+      el.className = 'day-circle' +
+        (done ? ' done' : '') +
+        (isToday ? ' today' : '') +
+        (future ? ' future' : '');
+      el.style.setProperty('--wave', wave.toFixed(1) + 'px');
+      el.innerHTML = `<div class="dn">${d}</div>${wEnd ? `<div class="wl">W${Math.ceil(d/7)}</div>` : ''}`;
+      el.title = `Day ${d}`;
+      const openDay = () => { viewDay = d; App.go('today'); };
+      el.onclick = openDay;
+      if (!future) {
+        el.setAttribute('aria-label', `Day ${d}${isToday ? ' (today)' : ''}${done ? ' — done' : ''}`);
+        makeKeyActivatable(el, openDay, 'button');
+      } else {
+        el.setAttribute('aria-hidden', 'true');
+      }
+      container.appendChild(el);
+    }
+    this._renderPathLine(cd);
+
+    // Chart — gradient bars, glow on heavy-screen days, staggered entrance.
+    const chart = document.getElementById('chart');
+    chart.innerHTML = '';
+    const MAX_H = 8;
+    for (let d = 1; d <= 21; d++) {
+      const x   = S.days[d];
+      const hrs = parseFloat(x?.screenTime || 0);
+      const pct = Math.min(hrs / MAX_H, 1) * 100;
+      const future = d > cd;
+      const high = hrs >= 6;
+      const col = document.createElement('div');
+      col.className = 'bar-col';
+      col.innerHTML = `
+        <div class="bar${hrs > 0 ? ' filled' : ''}${high ? ' high' : ''}"
+             style="--i:${d - 1};height:${Math.max(pct,2)}%;opacity:${future?.3:1};"
+             title="Day ${d}: ${hrs}h"></div>
+        <div class="bar-label">${d}</div>
+      `;
+      chart.appendChild(col);
+    }
+
+    this._renderComboChart();
+    document.getElementById('prog-intention').textContent = S.intention || t('noIntention');
+  },
+
+  /* Glowing gradient line joining the centers of logged days —
+     purely decorative, redrawn from real layout boxes each render
+     (and on resize) so it always lines up with the wavy circles. */
+  _renderPathLine(cd) {
+    const wrap = document.querySelector('.circles-grid-wrap');
+    const svg = document.getElementById('path-line');
+    const container = document.getElementById('circles');
+    if (!wrap || !svg || !container || !container.children.length) return;
+    const wrapRect = wrap.getBoundingClientRect();
+    if (!wrapRect.width) return;
+    svg.setAttribute('viewBox', `0 0 ${wrapRect.width} ${wrapRect.height}`);
+
+    const pts = [];
+    for (let d = 1; d <= Math.min(cd, 21); d++) {
+      const el = container.children[d - 1];
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      pts.push(`${(r.left - wrapRect.left + r.width / 2).toFixed(1)},${(r.top - wrapRect.top + r.height / 2).toFixed(1)}`);
+    }
+    if (pts.length < 2) { svg.innerHTML = ''; return; }
+    svg.innerHTML = `
+      <defs>
+        <linearGradient id="pathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="var(--primary)"/>
+          <stop offset="100%" stop-color="var(--gold)"/>
+        </linearGradient>
+      </defs>
+      <polyline points="${pts.join(' ')}" fill="none" stroke="url(#pathGradient)" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round" opacity=".5"
+        style="filter:drop-shadow(0 0 5px rgba(74,222,128,.35));"/>`;
+  },
+
+  _renderComboChart() {
+    const W = 315, H = 120, PAD = 8;
+    const stepX = (d) => (d - 1) / 20 * W;
+    const toY = (v) => H - PAD - v * (H - PAD * 2);
+
+    const series = [
+      { key: 'mood',   color: 'var(--chart-mood)',   get: x => (x && x.mood > 0) ? (x.mood - 1) / 4 : null },
+      { key: 'screen', color: 'var(--chart-screen)', get: x => x ? Math.min(parseFloat(x.screenTime || 0), 12) / 12 : null },
+      { key: 'sleep',  color: 'var(--chart-sleep)',  get: x => (x && typeof x.sleep === 'number') ? Math.min(x.sleep, 12) / 12 : null }
+    ];
+
+    let svg = `<line x1="0" y1="${H - PAD}" x2="${W}" y2="${H - PAD}" stroke="var(--border)" stroke-width="1"/>`;
+
+    series.forEach(s => {
+      // Build contiguous runs so gaps (unlogged days) don't get bridged.
+      let run = [];
+      const flush = () => {
+        if (run.length > 1) {
+          const pts = run.map(([d, v]) => `${stepX(d).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+          svg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+        }
+        run.forEach(([d, v]) => {
+          svg += `<circle cx="${stepX(d).toFixed(1)}" cy="${toY(v).toFixed(1)}" r="2.2" fill="${s.color}"/>`;
+        });
+        run = [];
+      };
+      for (let d = 1; d <= 21; d++) {
+        const v = s.get(S.days[d]);
+        if (v === null || v === undefined || isNaN(v)) { flush(); continue; }
+        run.push([d, v]);
+      }
+      flush();
+    });
+
+    document.getElementById('combo-chart').innerHTML = svg;
+  },
+
+  /* ── Habits ─────────────────────────────────────── */
+  _renderHabits() {
+    const wrap = document.getElementById('habit-list');
+    wrap.innerHTML = '';
+    const catNames  = (STRINGS[S.lang] || STRINGS.en).habitCats;
+    const itemNames = (STRINGS[S.lang] || STRINGS.en).habitItems || {};
+    let i = 0;
+    Object.entries(HABITS_DATA).forEach(([cat, items]) => {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `<div class="habit-cat-title">${catNames[cat] || cat}</div>`;
+      items.forEach(item => {
+        const checked = S.habits.includes(item);
+        const row = document.createElement('div');
+        row.className = 'habit-row' + (checked ? ' checked' : '');
+        row.style.setProperty('--i', i++);
+        row.innerHTML = `<div class="hcheck"></div><div class="hlabel">${itemNames[item] || item}</div>`;
+        const toggle = () => this._toggleHabit(item);
+        row.onclick = toggle;
+        row.setAttribute('aria-checked', String(checked));
+        makeKeyActivatable(row, toggle, 'checkbox');
+        div.appendChild(row);
+      });
+      wrap.appendChild(div);
+    });
+    this._renderCustom();
+  },
+
+  _toggleHabit(label) {
+    const i = S.habits.indexOf(label);
+    if (i >= 0) S.habits.splice(i, 1); else S.habits.push(label);
+    save(); this._renderHabits();
+  },
+
+  addCustom() {
+    const el = document.getElementById('custom-input');
+    const v = el.value.trim(); if (!v) return;
+    S.customHabits.push({ label: v, checked: false });
+    el.value = ''; save(); this._renderCustom();
+  },
+
+  _toggleCustom(i) {
+    S.customHabits[i].checked = !S.customHabits[i].checked;
+    save(); this._renderCustom();
+  },
+
+  _renderCustom() {
+    const wrap = document.getElementById('custom-list');
+    wrap.innerHTML = '';
+    (S.customHabits || []).forEach((h, i) => {
+      const row = document.createElement('div');
+      row.className = 'habit-row' + (h.checked ? ' checked' : '');
+      row.style.setProperty('--i', i);
+      row.innerHTML = `<div class="hcheck"></div><div class="hlabel">${h.label}</div>`;
+      const toggle = () => this._toggleCustom(i);
+      row.onclick = toggle;
+      row.setAttribute('aria-checked', String(!!h.checked));
+      makeKeyActivatable(row, toggle, 'checkbox');
+      wrap.appendChild(row);
+    });
+  },
+
+  /* ── Reflections ────────────────────────────────── */
+  setWeek(w) {
+    reflectWeek = w;
+    document.querySelectorAll('.tab-btn').forEach((b, i) =>
+      b.classList.toggle('active', i+1 === w)
+    );
+    this._renderReflect();
+  },
+
+  _renderReflect() {
+    const w  = reflectWeek;
+    const st = weekStats(w);
+    const saved = S.reflections[w] || {};
+    const qs = (STRINGS[S.lang]||STRINGS.en).reflectQs;
+    const quotes = (STRINGS[S.lang]||STRINGS.en).quotes;
+    const ph = t('writeThoughts');
+
+    let html = `<div class="quote-box">${quotes[w] || quotes.default}</div>`;
+
+    qs.forEach((q, i) => {
+      html += `
+        <div class="card">
+          <div class="form-row">
+            <label style="font-weight:800;color:var(--green-dark);font-size:.85rem;">■ ${q}</label>
+            <textarea rows="3" id="rq-${w}-${i}" placeholder="${ph.replace(/"/g,'&quot;')}"
+              onchange="App._saveReflect(${w},${i})">${saved['q'+i] || ''}</textarea>
+          </div>
+        </div>`;
+    });
+
+    html += `
+      <div class="card-dark">
+        <h2>${t('weekStats', w)}</h2>
+        <div class="note" style="opacity:.9;line-height:2.1;">
+          <div>• ${t('totalScreen')}: <strong>${st.totScreen} hrs</strong></div>
+          <div>• ${t('challengesDoneOf7')}: <strong>${st.done} / 7</strong></div>
+          <div>• ${t('avgMoodOf5')}: <strong>${st.avgMood} / 5</strong></div>
+        </div>
+      </div>`;
+
+    document.getElementById('reflect-body').innerHTML = html;
+  },
+
+  _saveReflect(w, i) {
+    if (!S.reflections[w]) S.reflections[w] = {};
+    const el = document.getElementById(`rq-${w}-${i}`);
+    if (el) S.reflections[w]['q'+i] = el.value;
+    save();
+  },
+
+  /* ── Final Reflection & Certificate ─────────────── */
+  _renderFinish() {
+    document.getElementById('cert-name').textContent = S.name || 'Your Name';
+    document.getElementById('cert-date').textContent =
+      new Date().toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
+
+    const fqs = (STRINGS[S.lang]||STRINGS.en).finalQs;
+    const form = document.getElementById('final-form');
+    const ph = t('writeThoughts');
+    let html = '';
+    fqs.forEach((item, i) => {
+      html += `
+        <div class="form-row">
+          <label style="font-weight:800;color:var(--green-dark);font-size:.85rem;">→ ${item.q}</label>
+          <textarea rows="3" id="fq-${item.key}" placeholder="${ph.replace(/"/g,'&quot;')}"
+            onchange="App._saveFinal('${item.key}')">${S.finalReflection[item.key] || ''}</textarea>
+        </div>`;
+      if (i < fqs.length-1) html += '<div class="divider"></div>';
+    });
+    form.innerHTML = html;
+  },
+
+  _saveFinal(key) {
+    const el = document.getElementById('fq-' + key);
+    if (el) S.finalReflection[key] = el.value;
+    save();
+  },
+
+  /* ── Print Certificate ──────────────────────────── */
+  printCert() {
+    const name = S.name || 'Your Name';
+    const date = new Date().toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head>
+      <meta charset="UTF-8"><title>Certificate – ${t('appName')}</title>
+      <style>
+        body{font-family:Georgia,serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f0e8;margin:0;}
+        .c{border:4px solid #2d5016;border-radius:16px;padding:48px 40px;text-align:center;max-width:520px;background:#fff;}
+        h3{font-size:.78rem;letter-spacing:3px;text-transform:uppercase;color:#8a9a7a;}
+        .logo{font-size:2.8rem;margin-bottom:10px;}
+        .name{font-size:1.8rem;font-weight:900;color:#2d5016;margin:12px 0 8px;border-bottom:2px solid #2d5016;padding-bottom:8px;}
+        .title{font-size:1.1rem;font-weight:900;color:#2d5016;margin:8px 0;}
+        p{color:#4a5e3a;margin:5px 0;font-size:.9rem;}
+        .foot{display:flex;justify-content:space-between;margin-top:24px;font-size:.72rem;color:#8a9a7a;border-top:1px solid #d0e0c0;padding-top:14px;}
+        @media print{body{background:#fff;}}
+      </style></head><body>
+      <div class="c">
+        <div class="logo">📵</div>
+        <h3>${t('certHeader')}</h3>
+        <p>${t('certBody')}</p>
+        <div class="name">${name}</div>
+        <p>${t('certCompleted')}</p>
+        <div class="title">${t('certChallenge')}</div>
+        <p style="font-size:.78rem;color:#8a9a7a;margin-top:6px;">${t('certSub')}</p>
+        <div class="foot"><span>Date: ${date}</span><span>${t('certDone')}</span></div>
+      </div>
+      <script>window.onload=()=>window.print()<\/script>
+    </body></html>`);
+    win.document.close();
+  },
+
+  /* ── Certificate → downloadable PNG ──────────────── */
+  downloadCertImage() {
+    const canvas = document.getElementById('cert-canvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const name = S.name || 'Your Name';
+    const date = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const rr = (x, y, w, h, r) => {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    };
+
+    ctx.fillStyle = '#F5F0E8';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.strokeStyle = '#1B4332';
+    ctx.lineWidth = 6;
+    rr(28, 28, W - 56, H - 56, 20);
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    rr(46, 46, W - 92, H - 92, 12);
+    ctx.fill();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#0D1F13';
+    ctx.font = '64px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+    ctx.fillText('📵', W / 2, 150);
+
+    ctx.fillStyle = '#8a9a7a';
+    ctx.font = '700 15px Georgia, serif';
+    ctx.fillText((t('certHeader') || '').toUpperCase(), W / 2, 195);
+
+    ctx.fillStyle = '#4a5e3a';
+    ctx.font = '18px Georgia, serif';
+    ctx.fillText(t('certBody'), W / 2, 245);
+
+    ctx.fillStyle = '#1B4332';
+    ctx.font = '900 42px Georgia, serif';
+    ctx.fillText(name, W / 2, 305);
+    ctx.strokeStyle = '#1B4332';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(W / 2 - 180, 325); ctx.lineTo(W / 2 + 180, 325); ctx.stroke();
+
+    ctx.fillStyle = '#4a5e3a';
+    ctx.font = '18px Georgia, serif';
+    ctx.fillText(t('certCompleted'), W / 2, 365);
+
+    ctx.fillStyle = '#1B4332';
+    ctx.font = '900 24px Georgia, serif';
+    wrapText(ctx, t('certChallenge'), W / 2, 405, W - 200, 30);
+
+    ctx.fillStyle = '#8a9a7a';
+    ctx.font = 'italic 15px Georgia, serif';
+    wrapText(ctx, t('certSub'), W / 2, 460, W - 260, 22);
+
+    ctx.strokeStyle = '#d0e0c0';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(80, H - 90); ctx.lineTo(W - 80, H - 90); ctx.stroke();
+    ctx.fillStyle = '#8a9a7a';
+    ctx.font = '14px Georgia, serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Date: ' + date, 80, H - 60);
+    ctx.textAlign = 'right';
+    ctx.fillText(t('certDone'), W - 80, H - 60);
+
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `digital-detox-certificate-${(S.name || 'me').trim().replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+};
+
+function wrapText(ctx, text, cx, y, maxWidth, lineHeight) {
+  const words = (text || '').split(' ');
+  let line = '', lines = [];
+  words.forEach(w => {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; }
+    else line = test;
+  });
+  if (line) lines.push(line);
+  const startY = y - (lines.length - 1) * lineHeight / 2;
+  lines.forEach((l, i) => ctx.fillText(l, cx, startY + i * lineHeight));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => { App.init(); initStarfield(); });
+
+/* Re-check for a missed reminder every time the app regains focus, not
+   just at cold boot — this is what makes the notification "catch-up"
+   behavior actually useful throughout the day (see service-worker.js
+   for why we can't just fire a single long-delay timer instead). */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && S.name && S.startDate) {
+    App._checkMissedNotif();
+  }
+});
+
+/* Keep the sliding nav pill aligned with its tab across viewport/
+   orientation changes (its position is measured in real pixels). */
+let _navResizeT;
+window.addEventListener('resize', () => {
+  clearTimeout(_navResizeT);
+  _navResizeT = setTimeout(() => {
+    App._updateNavIndicator();
+    if (document.getElementById('page-progress').classList.contains('active')) {
+      App._renderPathLine(currentDay());
+    }
+  }, 120);
+});
+
+/* Keep the native status bar in sync if the OS-level dark/light setting
+   changes while the app is open and theme is "auto". */
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if ((S.theme || 'auto') === 'auto') App._syncNativeStatusBar();
+  });
+}
+
+/* ── Service Worker registration ────────────────────────── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>

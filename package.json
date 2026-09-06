@@ -1,0 +1,19 @@
+{
+  "name": "21-day-digital-detox",
+  "version": "1.0.0",
+  "description": "A 21-day digital detox and screen-time habit tracker PWA, packaged with Capacitor for iOS and Android.",
+  "private": true,
+  "scripts": {
+    "start": "node ../static-server.js www 8791"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/cli": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/ios": "^8.5.1",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/status-bar": "^8.0.3"
+  }
+}

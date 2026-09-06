@@ -1,0 +1,16 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Local signing / secrets — never commit these
+*.jks
+*.keystore
+key.properties
