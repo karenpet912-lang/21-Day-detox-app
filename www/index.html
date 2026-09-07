@@ -2876,10 +2876,15 @@ const App = {
     const btn = document.getElementById('ch-btn');
     if (data.challengeDone) {
       btn.textContent = t('markedDone');
-      btn.style.background = '#4a8c2a';
+      // Completed state reuses the gold accent — same signal the
+      // "today & done" day-circle uses, so it stays on-palette in
+      // both themes (and keeps its own on-gold text contrast).
+      btn.style.background = 'var(--gold)';
+      btn.style.color = 'var(--on-gold)';
     } else {
       btn.textContent = t('markDone');
       btn.style.background = '';
+      btn.style.color = '';
     }
 
     document.getElementById('fld-screen').value  = data.screenTime ?? 0;
@@ -3198,7 +3203,7 @@ const App = {
       html += `
         <div class="card">
           <div class="form-row">
-            <label style="font-weight:800;color:var(--green-dark);font-size:.85rem;">■ ${q}</label>
+            <label style="font-weight:800;color:var(--primary);font-size:.85rem;">■ ${q}</label>
             <textarea rows="3" id="rq-${w}-${i}" placeholder="${ph.replace(/"/g,'&quot;')}"
               onchange="App._saveReflect(${w},${i})">${saved['q'+i] || ''}</textarea>
           </div>
@@ -3238,7 +3243,7 @@ const App = {
     fqs.forEach((item, i) => {
       html += `
         <div class="form-row">
-          <label style="font-weight:800;color:var(--green-dark);font-size:.85rem;">→ ${item.q}</label>
+          <label style="font-weight:800;color:var(--primary);font-size:.85rem;">→ ${item.q}</label>
           <textarea rows="3" id="fq-${item.key}" placeholder="${ph.replace(/"/g,'&quot;')}"
             onchange="App._saveFinal('${item.key}')">${S.finalReflection[item.key] || ''}</textarea>
         </div>`;

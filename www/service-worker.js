@@ -5,7 +5,7 @@
    Bump CACHE_VERSION to force a full cache refresh.
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 'detox-v7';
+const CACHE_VERSION = 'detox-v8';
 
 const APP_SHELL = [
   './',
